@@ -1,0 +1,14 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Loi";
+}
+
+<h1 class="text-danger">Da xay ra loi</h1>
+<h2 class="text-danger">Co loi trong qua trinh xu ly yeu cau.</h2>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}

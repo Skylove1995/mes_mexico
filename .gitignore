@@ -1,0 +1,17 @@
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+.vs/
+*.log
+MMES/wwwroot/lib/
+tmp/
+*.txt
+temp_*
+
+# secrets - chua connection string plaintext
+MMES/settings.json
+appsettings.Development.json
+appsettings.Local.json

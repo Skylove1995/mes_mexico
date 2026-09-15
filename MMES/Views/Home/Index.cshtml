@@ -1,0 +1,119 @@
+@model List<MMES.Models.DashboardDeptTile>
+@{
+    Layout = null;
+
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "?";
+    var deptName = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+    var initials = string.Join("", fullName
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Select(p => char.ToUpperInvariant(p[0])));
+    if (initials.Length == 0)
+    {
+        initials = "?";
+    }
+    else if (initials.Length > 2)
+    {
+        initials = initials.Substring(0, 2);
+    }
+
+    string Slug(string code) => code.ToLowerInvariant().Replace(" ", "-");
+
+    string Monogram(string code)
+    {
+        var parts = code.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length > 1)
+        {
+            return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[1][0])}";
+        }
+        return code.Length >= 2 ? code.Substring(0, 2).ToUpperInvariant() : code.ToUpperInvariant();
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - MMES</title>
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+</head>
+<body class="dashboard-page">
+    <header class="topbar">
+        <a class="brand" asp-controller="Home" asp-action="Index" title="Back to dashboard">
+            <img src="~/images/Logo.png" alt="HAENG SUNG logo">
+            <div>
+                <div class="name">HAENG SUNG</div>
+                <div class="tag">MMES · REV 3.0</div>
+            </div>
+        </a>
+
+        <nav class="dept-nav" aria-label="Departments">
+            @foreach (var tile in Model!)
+            {
+                <a href="#dept-@Slug(tile.Code)"><span class="dot"></span>@tile.Code</a>
+            }
+        </nav>
+
+        <div class="user-chip">
+            <span class="avatar">@initials</span>
+            <span class="who">
+                <span class="name">@fullName</span>
+                <span class="dept">@deptName</span>
+            </span>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit">Sign out</button>
+            </form>
+        </div>
+    </header>
+
+    <main id="top">
+        <section class="glass about">
+            <div class="ghost-mark" aria-hidden="true"></div>
+            <div class="about-copy">
+                <p class="eyebrow">About Haeng Sung</p>
+                <h1>60+ years of precision electronics manufacturing</h1>
+                <p>
+                    Founded in 1964 in Busan, South Korea, HAENG SUNG is a global electronics component
+                    manufacturer producing PCB assemblies, wire harnesses, SMT lines, FFC, secondary
+                    batteries and window systems &mdash; with production sites across Korea, Vietnam,
+                    China, Thailand, Indonesia, Mexico and Poland.
+                </p>
+                <p class="motto">
+                    &ldquo;Creation and passion, challenge and dreams &mdash; building a safer, more
+                    convenient world through the highest quality and technology.&rdquo;
+                </p>
+            </div>
+            <div class="fact-strip">
+                <span class="fact">FOUNDED 1964</span>
+                <span class="fact">HQ BUSAN, KR</span>
+                <span class="fact">7 COUNTRIES</span>
+                <span class="fact">CORE: SMT · PCBA</span>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-head">
+                <h2>Departments</h2>
+            </div>
+            <div class="dept-grid">
+                @foreach (var tile in Model!)
+                {
+                    <div class="glass dept-card" id="dept-@Slug(tile.Code)">
+                        <div class="photo">
+                            <img src="@tile.ImagePath" alt="@tile.Code">
+                            <div class="row-top">
+                                <div class="monogram">@Monogram(tile.Code)</div>
+                                <span class="badge">Coming soon</span>
+                            </div>
+                        </div>
+                        <div class="body">
+                            <div class="code">@tile.Code</div>
+                            <div class="desc">@tile.Desc</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    </main>
+</body>
+</html>

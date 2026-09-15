@@ -1,0 +1,179 @@
+@model MMES.Models.AccountPageViewModel
+@{
+    Layout = null;
+    var activeTab = ViewData["ActiveTab"] as string ?? "login";
+    var registerSuccess = ViewData["RegisterSuccess"] as string;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In - MMES</title>
+    <link rel="stylesheet" href="~/css/account.css" />
+</head>
+<body class="account-page">
+    <div class="stage">
+        <section class="panel-form">
+            <div class="brand-row">
+                <img src="~/images/Logo.png" alt="HAENG SUNG logo">
+                <div class="brand-text">
+                    <span class="brand-name">HAENG SUNG</span>
+                    <span class="brand-sub">MMES · REV 3.0</span>
+                </div>
+            </div>
+
+            <div class="heading">
+                <h1 id="heading-title">@(activeTab == "register" ? "Create a new account" : "Sign in to your account")</h1>
+                <p id="heading-sub">@(activeTab == "register" ? "Register for MMES using your employee ID and department." : "Enter your employee ID and password to access MMES.")</p>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="Switch between sign in and register">
+                <button type="button" role="tab" id="tab-login" aria-selected="@(activeTab == "login" ? "true" : "false")" aria-controls="form-login">Sign In</button>
+                <button type="button" role="tab" id="tab-register" aria-selected="@(activeTab == "register" ? "true" : "false")" aria-controls="form-register">Register</button>
+            </div>
+
+            <form class="account-form" id="form-login" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" aria-labelledby="tab-login" hidden="@(activeTab != "login" ? "hidden" : null)">
+                <div class="field">
+                    <label for="login-id">Employee ID</label>
+                    <div class="input-wrap">
+                        <input id="login-id" name="EmployeeId" type="text" placeholder="Ej. HS-00231" value="@Model.Login.EmployeeId" autocomplete="username" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrap">
+                        <input id="login-password" name="Password" type="password" placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
+                        <button type="button" class="eye" data-target="login-password" aria-pressed="false" aria-label="Show password">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3.2"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row-between">
+                    <label class="checkbox">
+                        <input type="checkbox" name="RememberMe" value="true" checked="@(Model.Login.RememberMe ? "checked" : null)">
+                        <input type="hidden" name="RememberMe" value="false">
+                        Remember me
+                    </label>
+                    <a class="link" href="#">Forgot password?</a>
+                </div>
+
+                <button class="submit" type="submit">Sign In</button>
+                <p class="form-note @(!ViewContext.ViewData.ModelState.IsValid && activeTab == "login" ? "error" : "")">
+                    @if (!ViewContext.ViewData.ModelState.IsValid && activeTab == "login")
+                    {
+                        @string.Join(" ", ViewContext.ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))
+                    }
+                    else if (!string.IsNullOrEmpty(registerSuccess))
+                    {
+                        @registerSuccess
+                    }
+                </p>
+            </form>
+
+            <form class="account-form" id="form-register" asp-controller="Account" asp-action="Register" method="post" aria-labelledby="tab-register" hidden="@(activeTab != "register" ? "hidden" : null)">
+                <div class="field">
+                    <label for="reg-name">Full Name</label>
+                    <div class="input-wrap">
+                        <input id="reg-name" name="FullName" type="text" placeholder="Juan Pérez García" value="@Model.Register.FullName" autocomplete="name" required>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="reg-id">Employee ID</label>
+                        <div class="input-wrap">
+                            <input id="reg-id" name="EmployeeId" type="text" placeholder="Ej. HS-00231" value="@Model.Register.EmployeeId" required>
+                        </div>
+                        @if (ViewContext.ViewData.ModelState["EmployeeId"]?.Errors.Count > 0)
+                        {
+                            <span class="field-error">@ViewContext.ViewData.ModelState["EmployeeId"]!.Errors.First().ErrorMessage</span>
+                        }
+                    </div>
+                    <div class="field">
+                        <label for="reg-dept">Department</label>
+                        <div class="input-wrap">
+                            <select id="reg-dept" name="DeptId" data-selected="@(Model.Register.DeptId > 0 ? Model.Register.DeptId.ToString() : "")" required>
+                                <option value="" selected disabled>Select a department</option>
+                            </select>
+                            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                        @if (ViewContext.ViewData.ModelState["DeptId"]?.Errors.Count > 0)
+                        {
+                            <span class="field-error">@ViewContext.ViewData.ModelState["DeptId"]!.Errors.First().ErrorMessage</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="reg-email">Company Email</label>
+                    <div class="input-wrap">
+                        <input id="reg-email" name="Email" type="email" placeholder="nombre.apellido@haengsung.com" value="@Model.Register.Email" autocomplete="email" required>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="reg-password">Password</label>
+                        <div class="input-wrap">
+                            <input id="reg-password" name="Password" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required minlength="8">
+                            <button type="button" class="eye" data-target="reg-password" aria-pressed="false" aria-label="Show password">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3.2"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="reg-password2">Confirm Password</label>
+                        <div class="input-wrap">
+                            <input id="reg-password2" name="ConfirmPassword" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" required minlength="8">
+                        </div>
+                    </div>
+                </div>
+
+                <label class="checkbox consent">
+                    <input type="checkbox" name="Consent" value="true" required>
+                    <input type="hidden" name="Consent" value="false">
+                    I agree to HAENG SUNG's internal system usage policy.
+                </label>
+
+                <button class="submit" type="submit">Create Account</button>
+                <p class="form-note @(!ViewContext.ViewData.ModelState.IsValid && activeTab == "register" ? "error" : "")">
+                    @if (!ViewContext.ViewData.ModelState.IsValid && activeTab == "register")
+                    {
+                        @string.Join(" ", ViewContext.ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))
+                    }
+                </p>
+            </form>
+
+            <div class="panel-footer">
+                <span>&copy; HAENG SUNG</span>
+                <span>MMES BUILD 3.0.0</span>
+            </div>
+        </section>
+
+        <section class="panel-brand">
+            <div class="bars" aria-hidden="true">
+                <div class="bar bar-a"></div>
+                <div class="bar bar-b"></div>
+                <div class="bar bar-c"></div>
+            </div>
+            <div class="ghost-mark" aria-hidden="true"></div>
+
+            <div class="brand-hero">
+                <p class="eyebrow">Manufacturing Execution System</p>
+                <h2>MMES</h2>
+                <p>Real-time monitoring of SMT, AOI/SPI and production planning for the HAENG SUNG plant.</p>
+            </div>
+
+            <div class="brand-footer">
+                <span class="wordmark">HAENG SUNG</span>
+                <span>10.8.11.184 · mex_mes</span>
+            </div>
+        </section>
+    </div>
+
+    <script src="~/js/account.js"></script>
+</body>
+</html>
