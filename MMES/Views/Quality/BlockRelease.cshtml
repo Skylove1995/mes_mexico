@@ -1,0 +1,152 @@
+@{
+    Layout = null;
+    var userFullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "QA Operator";
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Block / Release Production - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/quality-block-release.css" asp-append-version="true" />
+</head>
+<body class="dashboard-page">
+    <partial name="_DashboardHeader" />
+
+    <!-- Toast Notification Container for Bilingual Alerts -->
+    <div id="br-toast-container" class="br-toast-container"></div>
+
+    <main class="br-container">
+        <!-- Page Header Card -->
+        <div class="br-header-card">
+            <div class="br-title-group">
+                <span class="br-eyebrow">QUALITY CONTROL &bull; PID CONTAINMENT MATRIX</span>
+                <h1 class="br-title">PID Containment Control Center (Block / Release Production)</h1>
+                <p class="br-subtitle">PID lock and release status management at Rescan and QA Inspection processes.</p>
+            </div>
+            <div class="user-profile" style="background:#0E1117;">
+                <span class="user-avatar" style="width:26px; height:26px; font-size:11px;">👤</span>
+                <div class="user-info">
+                    <span class="user-name">@userFullName</span>
+                    <span class="user-role">LOGGED IN QA OPERATOR</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main 2-Column Grid Layout -->
+        <div class="br-grid">
+            <!-- Left Panel: Control Panel -->
+            <section class="br-control-panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Operation Setup</h2>
+                    <span class="system-badge">QA CONTROL</span>
+                </div>
+
+                <!-- Mode Selection Tabs -->
+                <div class="mode-selector">
+                    <div id="btn-mode-block" class="mode-btn is-active block" role="button" tabindex="0">
+                        <div class="mode-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                            </svg>
+                        </div>
+                        <span class="mode-label">BLOCK</span>
+                        <span class="mode-sub">Block PID (Status = 1)</span>
+                    </div>
+
+                    <div id="btn-mode-release" class="mode-btn release" role="button" tabindex="0">
+                        <div class="mode-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <span class="mode-label">RELEASE</span>
+                        <span class="mode-sub">Release PID (Status = 0)</span>
+                    </div>
+                </div>
+
+                <!-- Form Controls -->
+                <div class="form-group">
+                    <div class="form-label-row">
+                        <label for="br-pid-input" class="form-label">Target PIDs</label>
+                        <span class="form-counter">Entered <strong id="br-pid-count">0</strong> PIDs</span>
+                    </div>
+                    <textarea id="br-pid-input" class="br-textarea" placeholder="Ingrese PID (un PID por línea)..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="br-reason-input" class="form-label">Reason / Note</label>
+                    <input type="text" id="br-reason-input" class="br-input" placeholder="Ingrese el motivo del bloqueo o liberación..." />
+                </div>
+
+                <button type="button" id="br-submit-btn" class="br-submit-btn is-block-mode">
+                    <span id="br-submit-text">⚡ CONFIRM BLOCK</span>
+                </button>
+            </section>
+
+            <!-- Right Panel: History Log Table -->
+            <section class="br-history-panel">
+                <div class="history-toolbar">
+                    <div class="panel-head" style="border:none; padding:0;">
+                        <h2 class="panel-title">Operation History Log</h2>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="history-search">
+                            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <input type="text" id="br-search-input" class="search-input" placeholder="Buscar PID o usuario..." />
+                        </div>
+                        <button type="button" id="br-refresh-btn" class="refresh-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Content -->
+                <div class="table-responsive">
+                    <table class="br-history-table">
+                        <thead>
+                            <tr>
+                                <th class="col-idx">#</th>
+                                <th class="col-time">TIME</th>
+                                <th class="col-pid">PID</th>
+                                <th class="col-user">USER BLOCK</th>
+                                <th class="col-details">OPERATION DETAILS</th>
+                                <th class="col-status">STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="br-history-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:20px; color:#8B949E;">
+                                    Loading operation log...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="~/js/quality-block-release.js" asp-append-version="true"></script>
+
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>

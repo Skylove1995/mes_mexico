@@ -1,0 +1,829 @@
+@{
+    Layout = null;
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OQC Inspection - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <!-- Tailwind CSS v3 via CDN (with console warning suppressor) -->
+    <script>
+        (function() {
+            var w = console.warn;
+            console.warn = function() {
+                if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) return;
+                w.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js & Datalabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+
+<body class="dashboard-page bg-[#0B0F17] text-slate-100 font-sans antialiased min-h-screen">
+    <partial name="_DashboardHeader" />
+
+    <main class="oqc-container max-w-[1700px] mx-auto">
+        <!-- Sub Header & Date Control Bar -->
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-5 bg-slate-900/90 backdrop-blur border border-slate-800 p-4 rounded-xl shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-400">
+                    <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-bold tracking-tight text-white">OQC INSPECTION</h1>
+                        <span class="px-2 py-0.5 text-xs font-semibold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">REAL-TIME MES</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Hourly Scanout Output</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="hidden lg:flex flex-col text-right px-3 py-1 bg-slate-950/80 border border-slate-800 rounded-lg text-xs">
+                    <span class="text-slate-400">Shift Execution Window:</span>
+                    <span class="font-mono text-cyan-300 font-medium" id="shiftTimeRangeDisplay">Loading...</span>
+                </div>
+
+                <!-- Date Picker Calendar -->
+                <div class="flex items-center gap-2 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-sm focus-within:border-cyan-500 transition">
+                    <svg class="w-4 h-4 text-cyan-400" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
+                    </svg>
+                    <label for="workDate" class="text-xs text-slate-400 font-medium">Production Date:</label>
+                    <input type="date" id="workDate" class="bg-transparent text-white font-mono outline-none cursor-pointer">
+                </div>
+
+                <!-- Shift Filter -->
+                <select id="shiftFilter" class="bg-slate-950 border border-slate-700 text-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-cyan-500">
+                    <option value="ALL">All Shifts (20h - 20h)</option>
+                    <option value="NIGHT">Night Shift (20h - 08h)</option>
+                    <option value="DAY">Day Shift (08h - 20h)</option>
+                </select>
+
+                <!-- Refresh Button -->
+                <button onclick="fetchScanoutData()" class="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-sm rounded-lg transition flex items-center gap-1.5 shadow-md shadow-cyan-600/20" title="Reload Scanout Data">
+                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8 8 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8 8 0 0 1-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+
+                <!-- Export CSV Button -->
+                <button onclick="downloadScanoutCSV()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-lg transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20" title="Download Full Matrix CSV File">
+                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric Toggle Toolbar & Summary KPIs -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 mb-5 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium mr-1 uppercase tracking-wider">Matrix Display Mode:</span>
+                
+                <button id="btnModeQty" onclick="switchMatrixMode('QTY')" class="px-3 py-1.5 bg-cyan-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow">
+                    <span>📦 Output Qty (PCS)</span>
+                </button>
+
+                <button id="btnModeUPH" onclick="switchMatrixMode('UPH')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition flex items-center gap-1.5 border border-slate-700">
+                    <span>⚡ Hourly UPH Rate</span>
+                </button>
+            </div>
+
+            <!-- Quick Status Indicators -->
+            <div class="flex items-center gap-4 text-xs font-mono">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-400">Total Output:</span>
+                    <span class="text-white font-bold" id="kpiTotalQty">&ndash;</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-400">Avg UPH:</span>
+                    <span class="text-cyan-400 font-bold" id="kpiAvgUph">&ndash;</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-400">Peak UPH:</span>
+                    <span class="text-indigo-400 font-bold" id="kpiPeakUph">&ndash;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MATRIX CONTENT AREA WITH INLINE LOADING OVERLAY (SCOPED TO MATRIX & CHART ONLY) -->
+        <div class="relative min-h-[550px]" id="matrixContentArea">
+            <!-- INLINE LOADING OVERLAY -->
+            <div id="matrixLoadingOverlay" class="absolute inset-0 z-40 hidden flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md rounded-2xl transition-all duration-300">
+                <div class="relative bg-slate-900/95 border-2 border-cyan-500/40 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl text-center overflow-hidden">
+                    <!-- Ambient Glow -->
+                    <div class="absolute -top-12 -left-12 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl"></div>
+                    <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
+
+                    <!-- Cute Girl Character Image Container -->
+                    <div class="relative mx-auto w-32 h-32 mb-3 flex items-center justify-center">
+                        <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-500 animate-spin opacity-40 blur-md"></div>
+                        <img src="/images/loading_cute_girl.png" alt="Loading..." class="relative w-28 h-28 object-contain rounded-full border-2 border-cyan-400/60 shadow-lg" />
+                    </div>
+
+                    <!-- Title & Percentage -->
+                    <h3 class="text-base font-bold text-white tracking-wide mb-1 flex items-center justify-center gap-1.5">
+                        <span>Loading Scanout Matrix</span>
+                        <span class="text-cyan-400 font-mono text-sm" id="loadPercentage">0%</span>
+                    </h3>
+                    <p class="text-xs text-slate-300 mb-3 h-5 flex items-center justify-center font-medium" id="loadStatusText">
+                        Connecting to database...
+                    </p>
+
+                    <!-- Dynamic Real Progress Bar -->
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden mb-2 border border-slate-700/80 p-0.5">
+                        <div id="loadProgressBar" class="bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-200 ease-out" style="width: 0%;"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mt-2">
+                        <span>Scanout Data Engine</span>
+                        <span class="text-cyan-400 font-medium" id="loadProgressDetail">Initializing...</span>
+                    </div>
+                </div>
+            </div>
+        <main class="bg-slate-900/90 border border-slate-800 rounded-xl shadow-2xl overflow-hidden mb-6">
+            <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-950/80">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></span>
+                        <h2 class="text-lg font-extrabold text-white tracking-wide" id="matrixTableTitle">
+                            PRODUCTION MATRIX — OUTPUT QUANTITY (PCS)
+                        </h2>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Real-time scanout output aggregated by Line &amp; Model Suffix</p>
+                </div>
+
+                <div class="flex items-center gap-3 text-xs">
+                    <span class="text-slate-400 hidden lg:inline">Heatmap Thresholds:</span>
+                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">&ge; 4,000 (High)</span>
+                    <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">3,000 - 3,999 (Normal)</span>
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">1,500 - 2,999 (Low)</span>
+                    <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">&lt; 1,500 (Warning)</span>
+                </div>
+            </div>
+
+            <!-- Scrollable High Density Matrix -->
+            <div class="overflow-x-auto overflow-y-max max-h-[620px] relative">
+                <table class="w-full text-left border-collapse text-xs font-mono" id="matrixMainTable">
+                    <thead>
+                        <tr class="sticky-header text-slate-300 uppercase tracking-wider text-[11px] border-b border-slate-700">
+                            <th class="p-3 sticky-header-col-1 w-[110px] min-w-[110px] bg-slate-900 border-r border-slate-800">LINE</th>
+                            <th class="p-3 sticky-header-col-2 w-[140px] min-w-[140px] bg-slate-900 border-r border-slate-700">MODEL SUFFIX</th>
+                            
+                            <!-- Night Shift Headers (6 Slots: 20:00 - 08:00) -->
+                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 20:00 - 22:00">20-22</th>
+                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 22:00 - 00:00">22-00</th>
+                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 00:00 - 02:00">00-02</th>
+                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 02:00 - 04:00">02-04</th>
+                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 04:00 - 06:00">04-06</th>
+                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 06:00 - 08:00">06-08</th>
+                            <th class="p-2.5 text-center bg-indigo-900/90 text-indigo-200 font-bold border-r border-indigo-700 min-w-[85px]">NIGHT TOTAL</th>
+
+                            <!-- Day Shift Headers (6 Slots: 08:00 - 20:00) -->
+                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 08:00 - 10:00">08-10</th>
+                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 10:00 - 12:00">10-12</th>
+                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 12:00 - 14:00">12-14</th>
+                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 14:00 - 16:00">14-16</th>
+                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 16:00 - 18:00">16-18</th>
+                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 18:00 - 20:00">18-20</th>
+                            <th class="p-2.5 text-center bg-cyan-950/90 text-cyan-200 font-bold border-r border-cyan-800 min-w-[85px]">DAY TOTAL</th>
+
+                            <!-- Total Grand Column -->
+                            <th class="p-2.5 text-center bg-slate-950 text-amber-400 font-bold min-w-[95px]">GRAND TOTAL</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-slate-800 text-slate-200" id="matrixTableBody">
+                        <tr>
+                            <td colspan="17" class="p-6 text-center text-slate-400">Loading scanout rate matrix data...</td>
+                        </tr>
+                    </tbody>
+
+                    <tfoot id="matrixTableFoot">
+                        <!-- Rendered by JS -->
+                    </tfoot>
+                </table>
+            </div>
+        </main>
+
+        <!-- BOTTOM SECTION: HOURLY TREND ANALYTICS CHART -->
+        <div class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-lg mb-6">
+            <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-800">
+                <div>
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                        HOURLY SCANOUT OUTPUT &amp; UPH SPEED TREND
+                    </h3>
+                    <p class="text-[11px] text-slate-400">Night vs Day Shift Output (PCS) with Hourly UPH Speed Trend across 12 Time Slots</p>
+                </div>
+            </div>
+            <div class="h-64 w-full">
+                <canvas id="productionTrendChart"></canvas>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- Page Scripts -->
+    <script>
+        let currentMode = 'QTY';
+        let currentScanoutData = null;
+        let trendChartInstance = null;
+        let overageChartInstance = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('workDate').value = todayStr;
+
+            document.getElementById('workDate').addEventListener('change', fetchScanoutData);
+            document.getElementById('shiftFilter').addEventListener('change', applyShiftFilter);
+
+            fetchScanoutData();
+        });
+
+        let progressTimer = null;
+        let currentProgress = 0;
+
+        function startLoadingProgress() {
+            const overlay = document.getElementById('matrixLoadingOverlay');
+            const bar = document.getElementById('loadProgressBar');
+            const pctText = document.getElementById('loadPercentage');
+            const statusText = document.getElementById('loadStatusText');
+            const detailText = document.getElementById('loadProgressDetail');
+
+            if (overlay) overlay.classList.remove('hidden');
+
+            currentProgress = 0;
+            if (bar) bar.style.width = '0%';
+            if (pctText) pctText.innerText = '0%';
+            if (statusText) statusText.innerText = 'Connecting to database...';
+            if (detailText) detailText.innerText = 'Initializing query...';
+
+            if (progressTimer) clearInterval(progressTimer);
+
+            const stages = [
+                { pct: 18, status: "Connecting to Production Database...", detail: "Establishing secure connection..." },
+                { pct: 40, status: "Querying Scanout Production Logs...", detail: "Filtering shift execution window..." },
+                { pct: 68, status: "Aggregating Hourly Output & UPH...", detail: "Grouping by Line & Model Suffix..." },
+                { pct: 85, status: "Calculating Night & Day Subtotals...", detail: "Building 12 time-slot matrix..." },
+                { pct: 95, status: "Finalizing scanout matrix table...", detail: "Preparing DOM renderer..." }
+            ];
+
+            let stageIdx = 0;
+            progressTimer = setInterval(() => {
+                if (stageIdx < stages.length) {
+                    const targetStage = stages[stageIdx];
+                    if (currentProgress < targetStage.pct) {
+                        currentProgress += Math.min(3 + Math.floor(Math.random() * 5), targetStage.pct - currentProgress);
+                        if (bar) bar.style.width = currentProgress + '%';
+                        if (pctText) pctText.innerText = currentProgress + '%';
+                        if (statusText) statusText.innerText = targetStage.status;
+                        if (detailText) detailText.innerText = targetStage.detail;
+                    } else {
+                        stageIdx++;
+                    }
+                } else {
+                    if (currentProgress < 98) {
+                        currentProgress += 1;
+                        if (bar) bar.style.width = currentProgress + '%';
+                        if (pctText) pctText.innerText = currentProgress + '%';
+                    }
+                }
+            }, 180);
+        }
+
+        function finishLoadingProgress() {
+            if (progressTimer) clearInterval(progressTimer);
+
+            const overlay = document.getElementById('matrixLoadingOverlay');
+            const bar = document.getElementById('loadProgressBar');
+            const pctText = document.getElementById('loadPercentage');
+            const statusText = document.getElementById('loadStatusText');
+            const detailText = document.getElementById('loadProgressDetail');
+
+            if (bar) bar.style.width = '100%';
+            if (pctText) pctText.innerText = '100%';
+            if (statusText) statusText.innerText = 'Matrix Loaded Successfully!';
+            if (detailText) detailText.innerText = 'Render complete';
+
+            setTimeout(() => {
+                if (overlay) overlay.classList.add('hidden');
+            }, 350);
+        }
+
+        async function fetchScanoutData() {
+            const dateVal = document.getElementById('workDate').value;
+            startLoadingProgress();
+            try {
+                const res = await fetch(`/api/quality/oqc-scanout?date=${dateVal}`);
+                if (!res.ok) throw new Error("Failed to fetch scanout data");
+                
+                const data = await res.json();
+                currentScanoutData = data;
+
+                // Sync date field if auto-fallback occurred
+                if (data.date && data.date !== dateVal) {
+                    document.getElementById('workDate').value = data.date;
+                }
+
+                document.getElementById('shiftTimeRangeDisplay').innerText = `${data.shiftStart} → ${data.shiftEnd}`;
+                
+                updateKPIs(data.summary);
+                renderMatrixTable(data);
+                renderCharts(data.trend);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('matrixTableBody').innerHTML = `
+                    <tr><td colspan="17" class="p-6 text-center text-rose-400">Error loading scanout data. Please try again.</td></tr>
+                `;
+            } finally {
+                finishLoadingProgress();
+            }
+        }
+
+        function updateKPIs(summary) {
+            if (!summary) return;
+            const totalQtyEl = document.getElementById('kpiTotalQty');
+            if (totalQtyEl) totalQtyEl.innerText = summary.totalQty.toLocaleString() + " PCS";
+            
+            const overEl = document.getElementById('kpiTotalOverage');
+            if (overEl) {
+                if (summary.totalOverageQty >= 0) {
+                    overEl.innerText = "+" + summary.totalOverageQty.toLocaleString() + " PCS";
+                    overEl.className = "px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300";
+                } else {
+                    overEl.innerText = summary.totalOverageQty.toLocaleString() + " PCS";
+                    overEl.className = "px-2 py-0.5 rounded font-bold bg-rose-500/20 text-rose-300";
+                }
+            }
+
+            const avgUphEl = document.getElementById('kpiAvgUph');
+            if (avgUphEl) avgUphEl.innerText = summary.avgUph.toLocaleString() + " UPH";
+
+            const peakUphEl = document.getElementById('kpiPeakUph');
+            if (peakUphEl) peakUphEl.innerText = summary.peakUph.toLocaleString() + " UPH (" + (summary.peakUphSlot || 'N/A') + ")";
+        }
+
+        function switchMatrixMode(mode) {
+            currentMode = mode;
+            
+            const btnQty = document.getElementById('btnModeQty');
+            const btnUph = document.getElementById('btnModeUPH');
+            const title = document.getElementById('matrixTableTitle');
+
+            [btnQty, btnUph].forEach(b => {
+                if (b) b.className = "px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition flex items-center gap-1.5 border border-slate-700";
+            });
+
+            if (mode === 'QTY') {
+                btnQty.className = "px-3 py-1.5 bg-cyan-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow";
+                title.innerText = "PRODUCTION MATRIX — OUTPUT QUANTITY (PCS)";
+            } else if (mode === 'UPH') {
+                btnUph.className = "px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow";
+                title.innerText = "PRODUCTION MATRIX — HOURLY UPH SPEED RATE (PCS/HOUR)";
+            }
+
+            if (currentScanoutData) {
+                renderMatrixTable(currentScanoutData);
+            }
+        }
+
+        function applyShiftFilter() {
+            if (currentScanoutData) {
+                renderMatrixTable(currentScanoutData);
+            }
+        }
+
+        function renderMatrixTable(data) {
+            const table = document.getElementById('matrixMainTable');
+            const tbody = document.getElementById('matrixTableBody');
+            const tfoot = document.getElementById('matrixTableFoot');
+            const shiftVal = document.getElementById('shiftFilter')?.value || 'ALL';
+
+            if (!data.rows || data.rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="17" class="p-6 text-center text-slate-400">No scanout records available for the selected date.</td></tr>`;
+                tfoot.innerHTML = '';
+                return;
+            }
+
+            // Render Dynamic Header based on shift filter
+            let theadHtml = `<tr class="sticky-header text-slate-300 uppercase tracking-wider text-[11px] border-b border-slate-700">`;
+            theadHtml += `<th class="p-3 sticky-header-col-1 w-[110px] min-w-[110px] bg-slate-900 border-r border-slate-800">LINE</th>`;
+            theadHtml += `<th class="p-3 sticky-header-col-2 w-[140px] min-w-[140px] bg-slate-900 border-r border-slate-700">MODEL SUFFIX</th>`;
+
+            if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
+                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 20:00 - 22:00">20-22</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 22:00 - 00:00">22-00</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 00:00 - 02:00">00-02</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 02:00 - 04:00">02-04</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 04:00 - 06:00">04-06</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 06:00 - 08:00">06-08</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-indigo-900/90 text-indigo-200 font-bold border-r border-indigo-700 min-w-[85px]">NIGHT TOTAL</th>`;
+            }
+
+            if (shiftVal === 'ALL' || shiftVal === 'DAY') {
+                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 08:00 - 10:00">08-10</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 10:00 - 12:00">10-12</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 12:00 - 14:00">12-14</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 14:00 - 16:00">14-16</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 16:00 - 18:00">16-18</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 18:00 - 20:00">18-20</th>`;
+                theadHtml += `<th class="p-2.5 text-center bg-cyan-950/90 text-cyan-200 font-bold border-r border-cyan-800 min-w-[85px]">DAY TOTAL</th>`;
+            }
+
+            if (shiftVal === 'ALL') {
+                theadHtml += `<th class="p-2.5 text-center bg-slate-950 text-amber-400 font-bold min-w-[95px]">GRAND TOTAL</th>`;
+            }
+            theadHtml += `</tr>`;
+
+            const thead = table.querySelector('thead');
+            if (thead) thead.innerHTML = theadHtml;
+
+            let html = '';
+
+            // Group rows by Line for Subtotals
+            const groupedByLine = {};
+            data.rows.forEach(r => {
+                if (!groupedByLine[r.line]) groupedByLine[r.line] = [];
+                groupedByLine[r.line].push(r);
+            });
+
+            Object.keys(groupedByLine).forEach(lineKey => {
+                const rows = groupedByLine[lineKey];
+
+                rows.forEach(r => {
+                    html += `<tr class="hover:bg-slate-800/50 transition">`;
+                    html += `<td class="p-2.5 font-bold text-cyan-400 sticky-col-1 border-r border-slate-800">${escapeHtml(r.line)}</td>`;
+                    html += `<td class="p-2.5 font-semibold text-slate-100 sticky-col-2 border-r border-slate-700">${escapeHtml(r.modelSuffix)}</td>`;
+
+                    if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
+                        for (let i = 0; i < 6; i++) {
+                            const cell = r.slots[i];
+                            html += `<td class="p-2.5 text-center ${getCellStyle(cell)} border-r border-slate-800">${formatCellValue(cell)}</td>`;
+                        }
+                        html += `<td class="p-2.5 text-center font-bold bg-indigo-950/70 text-indigo-300 border-r border-indigo-700/80">${formatCellValue(r.nightTotal)}</td>`;
+                    }
+
+                    if (shiftVal === 'ALL' || shiftVal === 'DAY') {
+                        for (let i = 6; i < 12; i++) {
+                            const cell = r.slots[i];
+                            html += `<td class="p-2.5 text-center ${getCellStyle(cell)} border-r border-slate-800">${formatCellValue(cell)}</td>`;
+                        }
+                        html += `<td class="p-2.5 text-center font-bold bg-cyan-950/70 text-cyan-300 border-r border-cyan-700/80">${formatCellValue(r.dayTotal)}</td>`;
+                    }
+
+                    if (shiftVal === 'ALL') {
+                        html += `<td class="p-2.5 text-center font-bold bg-slate-950 text-amber-300">${formatCellValue(r.grandTotal)}</td>`;
+                    }
+                    html += `</tr>`;
+                });
+
+                // Add Highlighted Subtotal Row
+                if (rows.length > 0) {
+                    const lineSubtotal = calculateLineSubtotal(rows);
+                    html += `<tr class="bg-indigo-950/90 font-bold border-t-2 border-b-2 border-indigo-500/50 text-slate-100 shadow-md">`;
+                    html += `<td class="p-2.5 text-amber-300 sticky-col-1 border-r border-indigo-800 bg-indigo-950 font-extrabold uppercase tracking-wider">SUBTOTAL ${escapeHtml(lineKey)}</td>`;
+                    html += `<td class="p-2.5 text-cyan-300 sticky-col-2 border-r border-indigo-800 bg-indigo-950 font-semibold">${rows.length} Model(s)</td>`;
+
+                    if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
+                        for (let i = 0; i < 6; i++) {
+                            html += `<td class="p-2.5 text-center border-r border-indigo-900/60 bg-indigo-950/60 text-slate-100 font-bold">${formatCellValue(lineSubtotal.slots[i])}</td>`;
+                        }
+                        html += `<td class="p-2.5 text-center text-indigo-200 bg-indigo-900/90 border-r border-indigo-700 font-extrabold text-sm">${formatCellValue(lineSubtotal.nightTotal)}</td>`;
+                    }
+
+                    if (shiftVal === 'ALL' || shiftVal === 'DAY') {
+                        for (let i = 6; i < 12; i++) {
+                            html += `<td class="p-2.5 text-center border-r border-indigo-900/60 bg-indigo-950/60 text-slate-100 font-bold">${formatCellValue(lineSubtotal.slots[i])}</td>`;
+                        }
+                        html += `<td class="p-2.5 text-center text-cyan-200 bg-cyan-900/90 border-r border-indigo-700 font-extrabold text-sm">${formatCellValue(lineSubtotal.dayTotal)}</td>`;
+                    }
+
+                    if (shiftVal === 'ALL') {
+                        html += `<td class="p-2.5 text-center text-amber-400 bg-slate-950 font-black text-sm">${formatCellValue(lineSubtotal.grandTotal)}</td>`;
+                    }
+                    html += `</tr>`;
+                }
+            });
+
+            tbody.innerHTML = html;
+
+            // Grand Total Footer Row
+            const factoryGrand = calculateFactoryGrandTotal(data.rows);
+            let footHtml = `<tr class="bg-slate-950 text-white font-bold border-t-2 border-slate-600 text-xs">`;
+            footHtml += `<td class="p-3 text-amber-400 sticky-col-1 border-r border-slate-800 bg-slate-950">FACTORY GRAND TOTAL</td>`;
+            footHtml += `<td class="p-3 text-slate-300 sticky-col-2 border-r border-slate-700 bg-slate-950">ALL LINES</td>`;
+
+            if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
+                for (let i = 0; i < 6; i++) {
+                    footHtml += `<td class="p-3 text-center border-r border-slate-800 bg-indigo-950/50 text-indigo-200">${formatCellValue(factoryGrand.slots[i])}</td>`;
+                }
+                footHtml += `<td class="p-3 text-center text-xl text-indigo-300 bg-indigo-950 border-r border-indigo-700">${formatCellValue(factoryGrand.nightTotal)}</td>`;
+            }
+
+            if (shiftVal === 'ALL' || shiftVal === 'DAY') {
+                for (let i = 6; i < 12; i++) {
+                    footHtml += `<td class="p-3 text-center border-r border-slate-800 bg-cyan-950/50 text-cyan-200">${formatCellValue(factoryGrand.slots[i])}</td>`;
+                }
+                footHtml += `<td class="p-3 text-center text-xl text-cyan-300 bg-cyan-950 border-r border-cyan-700">${formatCellValue(factoryGrand.dayTotal)}</td>`;
+            }
+
+            if (shiftVal === 'ALL') {
+                footHtml += `<td class="p-3 text-center text-2xl text-amber-400 font-extrabold bg-slate-950">${formatCellValue(factoryGrand.grandTotal)}</td>`;
+            }
+            footHtml += `</tr>`;
+
+            tfoot.innerHTML = footHtml;
+        }
+
+        function formatCellValue(cell) {
+            if (!cell || cell.qty === 0) return "-";
+
+            if (currentMode === 'QTY') {
+                return cell.qty.toLocaleString();
+            } else if (currentMode === 'OVERAGE') {
+                return cell.overage >= 0 ? `+${cell.overage.toLocaleString()}` : cell.overage.toLocaleString();
+            } else if (currentMode === 'UPH') {
+                return cell.uph.toLocaleString();
+            } else if (currentMode === 'EFF') {
+                return cell.efficiencyPct.toFixed(1) + "%";
+            }
+            return cell.qty.toLocaleString();
+        }
+
+        function getCellStyle(cell) {
+            if (!cell || cell.qty === 0) return "cell-empty";
+
+            if (currentMode === 'OVERAGE') {
+                return cell.overage >= 0 ? "overage-positive" : "overage-negative";
+            }
+
+            if (cell.qty >= 4000) return "cell-high";
+            if (cell.qty >= 3000) return "cell-mid";
+            if (cell.qty >= 1500) return "cell-low";
+            return "cell-critical";
+        }
+
+        function calculateLineSubtotal(rows) {
+            const slots = [];
+            let nightQty = 0, dayQty = 0;
+
+            for (let i = 0; i < 12; i++) {
+                let slotQty = 0;
+                rows.forEach(r => {
+                    if (r.slots[i]) slotQty += r.slots[i].qty;
+                });
+
+                if (i < 6) nightQty += slotQty;
+                else dayQty += slotQty;
+
+                slots.push({
+                    qty: slotQty,
+                    overage: slotQty - 3750,
+                    uph: Math.round(slotQty / 2),
+                    efficiencyPct: Math.round(slotQty * 100.0 / 3750)
+                });
+            }
+
+            return {
+                slots,
+                nightTotal: { qty: nightQty, overage: nightQty - 22500, uph: Math.round(nightQty / 12), efficiencyPct: Math.round(nightQty * 100.0 / 22500) },
+                dayTotal: { qty: dayQty, overage: dayQty - 22500, uph: Math.round(dayQty / 12), efficiencyPct: Math.round(dayQty * 100.0 / 22500) },
+                grandTotal: { qty: nightQty + dayQty, overage: (nightQty + dayQty) - 45000, uph: Math.round((nightQty + dayQty) / 24), efficiencyPct: Math.round((nightQty + dayQty) * 100.0 / 45000) }
+            };
+        }
+
+        function calculateFactoryGrandTotal(rows) {
+            return calculateLineSubtotal(rows);
+        }
+
+        function renderCharts(trendData) {
+            if (!trendData) return;
+
+            const labels = trendData.map(t => t.hourLabel);
+            const outputQty = trendData.map(t => t.nightQty > 0 ? t.nightQty : t.dayQty);
+            const barColors = trendData.map(t => t.nightQty > 0 ? 'rgba(79, 70, 229, 0.85)' : 'rgba(6, 182, 212, 0.85)');
+            const actualUph = trendData.map(t => t.actualUph);
+
+            // Chart: Production Output & UPH Trend (Full Width)
+            const ctx1 = document.getElementById('productionTrendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+
+            trendChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Shift Output (PCS)',
+                            data: outputQty,
+                            backgroundColor: barColors,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            datalabels: { display: false }
+                        },
+                        {
+                            label: 'Actual UPH Rate',
+                            data: actualUph,
+                            type: 'line',
+                            borderColor: '#34D399',
+                            backgroundColor: '#34D399',
+                            borderWidth: 2.5,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#10B981',
+                            pointBorderColor: '#FFFFFF',
+                            pointBorderWidth: 1.5,
+                            yAxisID: 'y1',
+                            datalabels: {
+                                display: true,
+                                align: 'top',
+                                anchor: 'end',
+                                offset: 4,
+                                color: '#34D399',
+                                font: {
+                                    family: 'JetBrains Mono',
+                                    size: 11,
+                                    weight: 'bold'
+                                },
+                                formatter: function(val) {
+                                    return val ? val.toLocaleString() : '';
+                                }
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0F172A',
+                            titleColor: '#F8FAFC',
+                            bodyColor: '#38BDF8',
+                            borderColor: '#334155',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 10 } },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                        },
+                        y: {
+                            position: 'left',
+                            ticks: { color: '#94A3B8' },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: { color: '#34D399' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function downloadScanoutCSV() {
+            if (!currentScanoutData || !currentScanoutData.rows || currentScanoutData.rows.length === 0) {
+                alert("No scanout matrix data available to export.");
+                return;
+            }
+
+            const headers = [
+                "LINE", "MODEL SUFFIX",
+                "20-22", "22-00", "00-02", "02-04", "04-06", "06-08", "NIGHT TOTAL",
+                "08-10", "10-12", "12-14", "14-16", "16-18", "18-20", "DAY TOTAL",
+                "GRAND TOTAL"
+            ];
+
+            let csvContent = "\uFEFF"; // UTF-8 BOM for Microsoft Excel
+            csvContent += headers.map(h => `"${h}"`).join(",") + "\n";
+
+            // Group rows by Line for Subtotals
+            const groupedByLine = {};
+            currentScanoutData.rows.forEach(r => {
+                if (!groupedByLine[r.line]) groupedByLine[r.line] = [];
+                groupedByLine[r.line].push(r);
+            });
+
+            Object.keys(groupedByLine).forEach(lineKey => {
+                const rows = groupedByLine[lineKey];
+
+                rows.forEach(r => {
+                    const rowValues = [
+                        r.line,
+                        r.modelSuffix,
+                        r.slots[0]?.qty || 0,
+                        r.slots[1]?.qty || 0,
+                        r.slots[2]?.qty || 0,
+                        r.slots[3]?.qty || 0,
+                        r.slots[4]?.qty || 0,
+                        r.slots[5]?.qty || 0,
+                        r.nightTotal?.qty || 0,
+                        r.slots[6]?.qty || 0,
+                        r.slots[7]?.qty || 0,
+                        r.slots[8]?.qty || 0,
+                        r.slots[9]?.qty || 0,
+                        r.slots[10]?.qty || 0,
+                        r.slots[11]?.qty || 0,
+                        r.dayTotal?.qty || 0,
+                        r.grandTotal?.qty || 0
+                    ];
+                    csvContent += rowValues.map(v => `"${v}"`).join(",") + "\n";
+                });
+
+                // Subtotal row
+                if (rows.length > 0) {
+                    const sub = calculateLineSubtotal(rows);
+                    const subValues = [
+                        `SUBTOTAL ${lineKey}`,
+                        `${rows.length} Models`,
+                        sub.slots[0]?.qty || 0,
+                        sub.slots[1]?.qty || 0,
+                        sub.slots[2]?.qty || 0,
+                        sub.slots[3]?.qty || 0,
+                        sub.slots[4]?.qty || 0,
+                        sub.slots[5]?.qty || 0,
+                        sub.nightTotal?.qty || 0,
+                        sub.slots[6]?.qty || 0,
+                        sub.slots[7]?.qty || 0,
+                        sub.slots[8]?.qty || 0,
+                        sub.slots[9]?.qty || 0,
+                        sub.slots[10]?.qty || 0,
+                        sub.slots[11]?.qty || 0,
+                        sub.dayTotal?.qty || 0,
+                        sub.grandTotal?.qty || 0
+                    ];
+                    csvContent += subValues.map(v => `"${v}"`).join(",") + "\n";
+                }
+            });
+
+            // Grand total row
+            const grand = calculateFactoryGrandTotal(currentScanoutData.rows);
+            const grandValues = [
+                "FACTORY GRAND TOTAL",
+                "ALL LINES",
+                grand.slots[0]?.qty || 0,
+                grand.slots[1]?.qty || 0,
+                grand.slots[2]?.qty || 0,
+                grand.slots[3]?.qty || 0,
+                grand.slots[4]?.qty || 0,
+                grand.slots[5]?.qty || 0,
+                grand.nightTotal?.qty || 0,
+                grand.slots[6]?.qty || 0,
+                grand.slots[7]?.qty || 0,
+                grand.slots[8]?.qty || 0,
+                grand.slots[9]?.qty || 0,
+                grand.slots[10]?.qty || 0,
+                grand.slots[11]?.qty || 0,
+                grand.dayTotal?.qty || 0,
+                grand.grandTotal?.qty || 0
+            ];
+            csvContent += grandValues.map(v => `"${v}"`).join(",") + "\n";
+
+            const dateVal = document.getElementById('workDate').value || new Date().toISOString().split('T')[0];
+            const fileName = `OQC_Inspection_Matrix_${dateVal}.csv`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>

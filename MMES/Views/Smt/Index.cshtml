@@ -1,0 +1,185 @@
+@{
+    Layout = null;
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SMT Division - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dashboard-page">
+    <partial name="_DashboardHeader" />
+
+    <!-- Top Operational Plant Status Bar -->
+    <div class="plant-status-bar">
+        <div class="status-indicator">
+            <span class="pulse-dot"></span>
+            <span class="status-text">DIVISION OPERATIONAL &bull; SMT SURFACE MOUNT LINE MATRIX</span>
+        </div>
+        <div class="status-metrics">
+            <div class="metric-item">
+                <span class="metric-lbl">DIVISION:</span>
+                <span class="metric-val">SMT OPERATIONS</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">ACTIVE LINES:</span>
+                <span class="metric-val highlight-gold">6 SMT LINES</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">INSPECTION PHASES:</span>
+                <span class="metric-val highlight-cyan">SPI &bull; MOI &bull; AOI</span>
+            </div>
+        </div>
+    </div>
+
+    <main id="top" class="dashboard-main">
+        <!-- Hero Industrial Command Banner -->
+        <section class="enterprise-hero">
+            <div class="hero-content">
+                <div class="hero-eyebrow">
+                    <span class="eyebrow-badge">DEPARTMENT MODULES</span>
+                    <span class="eyebrow-sub">SMT DIVISION</span>
+                </div>
+                <h1 class="hero-title">Surface Mount Technology Command Center</h1>
+                <p class="hero-desc">
+                    Real-time production monitoring, hourly defect tracking, and high-precision inspection analytics across 6 SMT lines. 
+                    Integrating 3D Solder Paste Inspection (SPI), Manual Optical Inspection (MOI), and Automated Optical Inspection (AOI).
+                </p>
+                <div class="hero-motto">
+                    &ldquo;Zero-defect precision manufacturing through continuous real-time quality analytics.&rdquo;
+                </div>
+            </div>
+
+            <div class="hero-fact-grid">
+                <div class="fact-card highlight">
+                    <div class="fact-num">12</div>
+                    <div class="fact-lbl">ACTIVE SMT LINES</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">3</div>
+                    <div class="fact-lbl">INSPECTION STAGES</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">24/7</div>
+                    <div class="fact-lbl">LIVE METRICS SYNC</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">&le; 5.0%</div>
+                    <div class="fact-lbl">MAX DEFECT THRESHOLD</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SMT Function Modules Grid -->
+        <section class="dept-section">
+            <div class="section-header">
+                <div class="header-left">
+                    <span class="section-tag">SMT EXECUTABLE MODULES</span>
+                    <h2 class="section-title">Available Applications</h2>
+                </div>
+                <div class="header-right">
+                    <span class="dept-count">Active Modules: <strong>1 / 3</strong></span>
+                </div>
+            </div>
+
+            <div class="dept-grid">
+                <!-- SMT Pass Rate (Active) -->
+                <div class="dept-card is-live is-featured" id="dept-smt-pass-rate">
+                    <div class="card-image-wrap">
+                        <img src="~/images/smt.jpg" alt="SMT Pass Rate" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">PR</div>
+                            <span class="badge live">
+                                <span class="badge-dot"></span>
+                                SYSTEM READY
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">SMT Pass Rate</div>
+                        <div class="dept-desc">Hourly production &amp; defect pass rate monitoring across Shift 1 &amp; Shift 2 (SPI / MOI / AOI).</div>
+
+                        <div class="card-footer">
+                            <a asp-controller="Smt" asp-action="ProductionRate" class="dept-action-btn primary">
+                                <span>ENTER MODULE</span>
+                                <svg class="arrow-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                    <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L11.44 8.5H2.75a.75.75 0 0 1 0-1.5h8.69L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPI Analytics (Coming Soon) -->
+                <div class="dept-card" id="dept-spi-analytics">
+                    <div class="card-image-wrap">
+                        <img src="~/images/smt.jpg" alt="SPI Analytics" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">SPI</div>
+                            <span class="badge soon">
+                                <span class="badge-dot"></span>
+                                COMING SOON
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">Solder Paste Inspection</div>
+                        <div class="dept-desc">3D Solder paste volume, height profile, and pad coverage deviation analysis.</div>
+
+                        <div class="card-footer">
+                            <button class="dept-action-btn disabled" disabled>
+                                <span>INACTIVE</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AOI Matrix (Coming Soon) -->
+                <div class="dept-card" id="dept-aoi-matrix">
+                    <div class="card-image-wrap">
+                        <img src="~/images/smt.jpg" alt="AOI Matrix" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">AOI</div>
+                            <span class="badge soon">
+                                <span class="badge-dot"></span>
+                                COMING SOON
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">Automated Optical Inspection</div>
+                        <div class="dept-desc">Post-reflow component placement, polarity check, and solder joint validation.</div>
+
+                        <div class="card-footer">
+                            <button class="dept-action-btn disabled" disabled>
+                                <span>INACTIVE</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>
+

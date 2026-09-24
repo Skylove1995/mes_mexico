@@ -1,0 +1,213 @@
+@{
+    Layout = null;
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quality Division - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dashboard-page">
+    <partial name="_DashboardHeader" />
+
+    <!-- Top Operational Plant Status Bar -->
+    <div class="plant-status-bar">
+        <div class="status-indicator">
+            <span class="pulse-dot"></span>
+            <span class="status-text">DIVISION OPERATIONAL &bull; QUALITY ASSURANCE &amp; CONTROL MATRIX</span>
+        </div>
+        <div class="status-metrics">
+            <div class="metric-item">
+                <span class="metric-lbl">DIVISION:</span>
+                <span class="metric-val">QUALITY ASSURANCE (QA/QC)</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">PID LOCK SYSTEM:</span>
+                <span class="metric-val highlight-gold">ONLINE</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">AUDIT STATUS:</span>
+                <span class="metric-val highlight-cyan">ACTIVE MONITORING</span>
+            </div>
+        </div>
+    </div>
+
+    <main id="top" class="dashboard-main">
+        <!-- Hero Industrial Command Banner -->
+        <section class="enterprise-hero">
+            <div class="hero-content">
+                <div class="hero-eyebrow">
+                    <span class="eyebrow-badge">DEPARTMENT MODULES</span>
+                    <span class="eyebrow-sub">QUALITY DIVISION</span>
+                </div>
+                <h1 class="hero-title">Quality Assurance &amp; PID Control Center</h1>
+                <p class="hero-desc">
+                    Comprehensive production quality management, PID block &amp; release controls, non-conformance quarantine tracking, 
+                    and multi-stage audit trail verification for zero-defect shipment assurance.
+                </p>
+                <div class="hero-motto">
+                    &ldquo;Uncompromising quality standards through real-time PID containment and full traceability.&rdquo;
+                </div>
+            </div>
+
+            <div class="hero-fact-grid">
+                <div class="fact-card highlight">
+                    <div class="fact-num">PID LOCK</div>
+                    <div class="fact-lbl">RESCAN CONTAINMENT</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">100%</div>
+                    <div class="fact-lbl">AUDIT TRACEABILITY</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">24/7</div>
+                    <div class="fact-lbl">REAL-TIME EXECUTION</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">BILINGUAL</div>
+                    <div class="fact-lbl">EN / ES ALERTS</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quality Function Modules Grid -->
+        <section class="dept-section">
+            <div class="section-header">
+                <div class="header-left">
+                    <span class="section-tag">QUALITY EXECUTABLE MODULES</span>
+                    <h2 class="section-title">Available Applications</h2>
+                </div>
+                <div class="header-right">
+                    <span class="dept-count">Active Modules: <strong>2 / 3</strong></span>
+                </div>
+            </div>
+
+            <div class="dept-grid">
+                <!-- OQC Inspection Scanout Matrix (Active) -->
+                <div class="dept-card is-live is-featured" id="dept-quality-oqc-scanout">
+                    <div class="card-image-wrap">
+                        <img src="~/images/background.jpg" alt="OQC Inspection Scanout Matrix" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">OQC</div>
+                            <span class="badge live">
+                                <span class="badge-dot"></span>
+                                SYSTEM READY
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">OQC Inspection Scanout Matrix</div>
+                        <div class="dept-desc">2-Hour interval scanout rate matrix &amp; UPH analytics grouped by line &amp; model suffix.</div>
+
+                        <div class="card-footer">
+                            <a asp-controller="Quality" asp-action="OqcScanout" class="dept-action-btn primary">
+                                <span>ENTER MODULE</span>
+                                <svg class="arrow-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                    <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L11.44 8.5H2.75a.75.75 0 0 1 0-1.5h8.69L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block / Release Production (Active) -->
+                <div class="dept-card is-live" id="dept-quality-block-release">
+                    <div class="card-image-wrap">
+                        <img src="~/images/background.jpg" alt="Block / Release Production" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">BR</div>
+                            <span class="badge live">
+                                <span class="badge-dot"></span>
+                                SYSTEM READY
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">Block / Release Production</div>
+                        <div class="dept-desc">Multi-line PID lock/unlock control for quarantine containment &amp; rescan verification audit trail.</div>
+
+                        <div class="card-footer">
+                            <a asp-controller="Quality" asp-action="BlockRelease" class="dept-action-btn primary">
+                                <span>ENTER MODULE</span>
+                                <svg class="arrow-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                    <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L11.44 8.5H2.75a.75.75 0 0 1 0-1.5h8.69L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- First Article Inspection (Coming Soon) -->
+                <div class="dept-card" id="dept-fai-inspection">
+                    <div class="card-image-wrap">
+                        <img src="~/images/background.jpg" alt="First Article Inspection" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">FAI</div>
+                            <span class="badge soon">
+                                <span class="badge-dot"></span>
+                                COMING SOON
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">First Article Inspection</div>
+                        <div class="dept-desc">Line setup verification, LCR meter measurement logs, and first piece sign-off.</div>
+
+                        <div class="card-footer">
+                            <button class="dept-action-btn disabled" disabled>
+                                <span>INACTIVE</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Defect Matrix (Coming Soon) -->
+                <div class="dept-card" id="dept-defect-matrix">
+                    <div class="card-image-wrap">
+                        <img src="~/images/background.jpg" alt="Defect Matrix" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">DM</div>
+                            <span class="badge soon">
+                                <span class="badge-dot"></span>
+                                COMING SOON
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">Defect Pareto Matrix</div>
+                        <div class="dept-desc">Non-conformance root cause analysis, 8D report generation, and corrective actions.</div>
+
+                        <div class="card-footer">
+                            <button class="dept-action-btn disabled" disabled>
+                                <span>INACTIVE</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+@{
+    Layout = null;
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SMT Pass Rate - MMES</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/production-rate.css" asp-append-version="true" />
+</head>
+
+<body class="dashboard-page">
+    <partial name="_DashboardHeader" />
+
+    <main id="top" class="pr-container">
+        <!-- Toolbar Header Banner with Integrated Pass Rate Overview KPIs -->
+        <section class="glass pr-toolbar">
+            <div class="pr-title-group">
+                <p class="eyebrow">SMT PRODUCTION MONITORING</p>
+                <h1>SMT Pass Rate Dashboard</h1>
+            </div>
+
+            <!-- 🏆 3 KPI Overview Labels Embedded directly in Top Banner -->
+            <div class="pr-kpi-grid pr-header-kpis">
+                <div class="glass pr-kpi-card pr-kpi-day">
+                    <div class="pr-kpi-header">
+                        <span class="pr-kpi-badge">SHIFT 1</span>
+                        <span class="pr-kpi-icon">☀️</span>
+                    </div>
+                    <span class="pr-kpi-label">DAY SHIFT PASS RATE</span>
+                    <div class="pr-kpi-metrics">
+                        <span class="pr-kpi-value" id="pr-kpi-day-value">&ndash;</span>
+                        <span class="pr-kpi-rate" id="pr-kpi-day-rate">&ndash;%</span>
+                    </div>
+                    <span class="pr-kpi-sub" id="pr-kpi-day-sub">&ndash;</span>
+                </div>
+
+                <div class="glass pr-kpi-card pr-kpi-night">
+                    <div class="pr-kpi-header">
+                        <span class="pr-kpi-badge">SHIFT 2</span>
+                        <span class="pr-kpi-icon">🌙</span>
+                    </div>
+                    <span class="pr-kpi-label">NIGHT SHIFT PASS RATE</span>
+                    <div class="pr-kpi-metrics">
+                        <span class="pr-kpi-value" id="pr-kpi-night-value">&ndash;</span>
+                        <span class="pr-kpi-rate" id="pr-kpi-night-rate">&ndash;%</span>
+                    </div>
+                    <span class="pr-kpi-sub" id="pr-kpi-night-sub">&ndash;</span>
+                </div>
+
+                <div class="glass pr-kpi-card pr-kpi-overall is-accent">
+                    <div class="pr-kpi-header">
+                        <span class="pr-kpi-badge is-accent">TOTAL PERFORMANCE</span>
+                        <span class="pr-kpi-icon">📊</span>
+                    </div>
+                    <span class="pr-kpi-label">OVERALL EFFICIENCY</span>
+                    <div class="pr-kpi-metrics">
+                        <span class="pr-kpi-value" id="pr-kpi-overall-value">&ndash;</span>
+                        <span class="pr-kpi-rate" id="pr-kpi-overall-rate">&ndash;%</span>
+                    </div>
+                    <span class="pr-kpi-sub" id="pr-kpi-overall-sub">&ndash;</span>
+                </div>
+            </div>
+
+            <div class="pr-toolbar-right">
+                <label class="pr-date-field">
+                    <span>Date</span>
+                    <input type="date" id="pr-date">
+                </label>
+                <div class="pr-status-badge">
+                    <span class="pr-live-dot"></span>
+                    <span class="pr-updated" id="pr-updated" aria-live="polite">Loading...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Machine Tabs & Threshold Legend -->
+        <div class="pr-tabs-bar">
+            <div class="pr-tabs" role="tablist" aria-label="Machine type">
+                <button type="button" role="tab" data-type="SPI" aria-selected="true">
+                    <span class="tab-icon">⚡</span> SPI Inspection
+                </button>
+                <button type="button" role="tab" data-type="MOI" aria-selected="false">
+                    <span class="tab-icon">🔍</span> MOI Inspection
+                </button>
+                <button type="button" role="tab" data-type="AOI" aria-selected="false">
+                    <span class="tab-icon">🎯</span> AOI Inspection
+                </button>
+            </div>
+            <div class="pr-threshold-legend">
+                <span class="legend-badge is-normal">≤ 5.0% Normal</span>
+                <span class="legend-badge is-danger">🚨 &gt; 5.0% Exceeded (High Defect)</span>
+            </div>
+        </div>
+
+        <!-- 🏆 PRIMARY CENTER FOCUS: DAY & NIGHT SHIFT MATRICES -->
+        <section class="pr-primary-matrices">
+            <!-- Day Shift Matrix Card -->
+            <div class="glass pr-shift-block pr-main-matrix">
+                <div class="pr-block-head">
+                    <div class="pr-matrix-title">
+                        <span class="pr-shift-icon">☀️</span>
+                        <h2>Day Shift Matrix <span class="pr-shift-range">08:00 - 20:00 (Shift 1)</span></h2>
+                    </div>
+                    <span class="pr-matrix-pill">Main Matrix</span>
+                </div>
+                <div class="pr-table-wrap">
+                    <table class="pr-table" id="pr-table-day"></table>
+                </div>
+            </div>
+
+            <!-- Night Shift Matrix Card -->
+            <div class="glass pr-shift-block pr-main-matrix">
+                <div class="pr-block-head">
+                    <div class="pr-matrix-title">
+                        <span class="pr-shift-icon">🌙</span>
+                        <h2>Night Shift Matrix <span class="pr-shift-range">20:00 (prev. day) - 08:00 (Shift 2)</span></h2>
+                    </div>
+                    <span class="pr-matrix-pill">Main Matrix</span>
+                </div>
+                <div class="pr-table-wrap">
+                    <table class="pr-table" id="pr-table-night"></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 📊 COMPACT SECONDARY SECTION: COMPACT HOURLY CHARTS -->
+        <section class="pr-secondary-section">
+            <div class="pr-section-header">
+                <h3>Analytics &amp; Hourly Performance Trends</h3>
+                <span class="pr-section-subtitle">Compact Trend Charts</span>
+            </div>
+
+            <!-- Compact Hourly Pass Rate Trend Charts -->
+            <div class="pr-charts-section pr-compact-charts">
+                <div class="pr-charts-row">
+                    <!-- Day Shift Hourly Chart -->
+                    <div class="glass pr-chart-card pr-compact-chart-card">
+                        <div class="pr-chart-head">
+                            <div>
+                                <h4>Day Shift Hourly Rate</h4>
+                                <span class="pr-shift-range">08:00 - 20:00 (Shift 1)</span>
+                            </div>
+                        </div>
+                        <svg class="pr-chart" id="pr-chart-day" viewBox="0 0 550 200" preserveAspectRatio="none" role="img" aria-label="Day Shift Hourly Trend"></svg>
+                        <div class="pr-chart-axis" id="pr-chart-day-axis"></div>
+                    </div>
+
+                    <!-- Night Shift Hourly Chart -->
+                    <div class="glass pr-chart-card pr-compact-chart-card">
+                        <div class="pr-chart-head">
+                            <div>
+                                <h4>Night Shift Hourly Rate</h4>
+                                <span class="pr-shift-range">20:00 - 08:00 (Shift 2)</span>
+                            </div>
+                        </div>
+                        <svg class="pr-chart" id="pr-chart-night" viewBox="0 0 550 200" preserveAspectRatio="none" role="img" aria-label="Night Shift Hourly Trend"></svg>
+                        <div class="pr-chart-axis" id="pr-chart-night-axis"></div>
+                    </div>
+                </div>
+
+                <!-- 24-Hour Pass Rate Flow Trend -->
+                <div class="glass pr-chart-card pr-compact-chart-card is-fullwidth">
+                    <div class="pr-chart-head">
+                        <div>
+                            <h4>24-Hour Overall Pass Rate Trend</h4>
+                            <span class="pr-shift-range">Full 24-Hour Production Timeline</span>
+                        </div>
+                        <div class="pr-legend">
+                            <span class="legend-item"><span class="legend-dot is-line"></span> Rate Trend</span>
+                            <span class="legend-item"><span class="legend-dot is-threshold"></span> 5.0% Max Limit</span>
+                        </div>
+                    </div>
+                    <svg class="pr-chart" id="pr-chart" viewBox="0 0 950 220" preserveAspectRatio="none" role="img" aria-label="Hourly user-pass rate trend"></svg>
+                    <div class="pr-chart-axis" id="pr-chart-axis"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="~/js/production-rate.js" asp-append-version="true"></script>
+
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>
+
+
+
