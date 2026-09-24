@@ -15,3 +15,6 @@ temp_*
 MMES/settings.json
 appsettings.Development.json
 appsettings.Local.json
+
+# superpowers scratch workspace (ledgers, briefs, review packages)
+.superpowers/
