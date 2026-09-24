@@ -12,7 +12,7 @@ switches without a reload).
 
 **In scope (theme-aware):**
 - `Views/Home/Index.cshtml`
-- `Views/Quality/Index.cshtml`, `Views/Quality/BlockRelease.cshtml`, `Views/Quality/OqcScanout.cshtml`
+- `Views/Quality/Index.cshtml`, `Views/Quality/BlockRelease.cshtml`
 - `Views/Smt/Index.cshtml`, `Views/Smt/ProductionRate.cshtml`
 - `Views/Shared/_DashboardHeader.cshtml` (partial, inherits host page's theme — no direct change needed)
 - `wwwroot/css/dashboard.css`, `wwwroot/css/quality-block-release.css`,
@@ -26,6 +26,13 @@ switches without a reload).
 - `wwwroot/css/site.css`, `Views/Shared/_Layout.cshtml` — this scaffold
   layout is not used by any real page (every view sets `Layout = null`), so
   it is left as-is.
+- `Views/Quality/OqcScanout.cshtml` — pinned to permanent dark mode (final
+  whole-branch review, 2026-09-23): its body content is hardcoded dark
+  Tailwind utility classes and inline Chart.js colors that are not
+  theme-aware, so it keeps `theme.css` linked (for `dashboard.css`
+  header/chrome tokens) but hardcodes `data-theme="dark"` and drops
+  `theme-clock.js`; converting the Tailwind/Chart.js content to be
+  theme-aware is tracked as separate follow-up work.
 
 ## Architecture
 

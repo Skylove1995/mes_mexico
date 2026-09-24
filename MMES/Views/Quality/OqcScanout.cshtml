@@ -9,10 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OQC Inspection - HAENG SUNG MEX-MES 3.0</title>
     <script>
-        (function () {
-            var hour = new Date().getHours();
-            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
-        })();
+        document.documentElement.setAttribute('data-theme', 'dark');
     </script>
     <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
@@ -823,7 +820,5 @@
             document.body.removeChild(link);
         }
     </script>
-
-    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
 </body>
 </html>

@@ -1,3 +1,10 @@
+/* NOT CURRENTLY LINKED FROM ANY VIEW.
+   4 accent/status color token mappings in this file have known pixel drift
+   vs. their original literals (see plan doc Task 7 / project ledger for
+   details). Do not link this file into a view until that's resolved —
+   recommended follow-up: add --danger-light, --success-tint-rgb,
+   --accent-cyan-rgb tokens to theme.css and repoint the drifted mappings. */
+
 /* OQC Scanout Production Rate Matrix Styles - MMES 3.0 */
 
 .oqc-container {
