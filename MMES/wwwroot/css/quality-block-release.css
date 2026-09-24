@@ -246,7 +246,7 @@
 }
 .br-submit-btn.is-block-mode {
   background: var(--danger);
-  color: var(--text-primary);
+  color: var(--text-on-danger);
   box-shadow: 0 4px 12px rgba(var(--danger-rgb), 0.3);
 }
 .br-submit-btn.is-block-mode:hover {

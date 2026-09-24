@@ -52,6 +52,7 @@
 
   /* unthemed — identical in both modes */
   --text-on-accent: #0E1117;
+  --text-on-danger: #FFFFFF;
   --radius: 6px;
   --font-display: 'Segoe UI Semibold','Segoe UI',Arial,sans-serif;
   --font-body: 'Segoe UI',Arial,system-ui,sans-serif;
