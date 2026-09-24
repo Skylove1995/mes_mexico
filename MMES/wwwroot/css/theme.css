@@ -20,6 +20,7 @@
   --text-secondary: #5B6472;
   --text-secondary-rgb: 91,100,114;
   --text-tertiary: #838B99;
+  --text-disabled: #AEB4BD;
 
   /* brand / accents */
   --accent-gold: #9A6A22;
@@ -71,6 +72,7 @@
   --text-secondary: #8B949E;
   --text-secondary-rgb: 139,148,158;
   --text-tertiary: #6E7681;
+  --text-disabled: #484F58;
 
   --accent-gold: #D9A65A;
   --accent-gold-rgb: 217,166,90;

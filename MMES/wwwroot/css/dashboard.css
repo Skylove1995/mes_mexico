@@ -706,7 +706,7 @@ body.dashboard-page::after{
 }
 .dept-action-btn.disabled {
   background: var(--bg-surface-inset);
-  color: var(--text-tertiary);
+  color: var(--text-disabled);
   border: 1px solid var(--border-subtle);
   cursor: not-allowed;
 }
