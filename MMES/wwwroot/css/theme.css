@@ -26,6 +26,7 @@
   --accent-gold: #9A6A22;
   --accent-gold-rgb: 154,106,34;
   --accent-gold-soft: rgba(154,106,34,.10);
+  --accent-gold-muted-rgb: 130,95,41;
   --accent-blue: #0B72B9;
   --accent-blue-rgb: 11,114,185;
 
@@ -39,10 +40,12 @@
   --success-soft: rgba(21,127,92,.08);
   --warning: #92600A;
   --warning-soft: rgba(146,96,10,.10);
+  --text-warning-soft: #92600A;
 
   /* effects */
   --hover-tint-rgb: 18,22,28;
   --overlay-scrim: rgba(255,255,255,0.98);
+  --color-scheme: light;
   --hero-image-filter: grayscale(15%) brightness(1.05);
   --hero-overlay-gradient:
     radial-gradient(1100px 560px at 82% -8%, rgba(154,106,34,.10), transparent 60%),
@@ -78,6 +81,7 @@
   --accent-gold: #D9A65A;
   --accent-gold-rgb: 217,166,90;
   --accent-gold-soft: rgba(217,166,90,.12);
+  --accent-gold-muted-rgb: 184,134,58;
   --accent-blue: #38BDF8;
   --accent-blue-rgb: 56,189,248;
 
@@ -90,9 +94,11 @@
   --success-soft: rgba(79,182,160,.16);
   --warning: #FBBF24;
   --warning-soft: rgba(245,158,11,.15);
+  --text-warning-soft: #F3E5AB;
 
   --hover-tint-rgb: 255,255,255;
   --overlay-scrim: rgba(22,27,34,0.98);
+  --color-scheme: dark;
   --hero-image-filter: grayscale(35%) brightness(.4);
   --hero-overlay-gradient:
     radial-gradient(1100px 560px at 82% -8%, rgba(217,166,90,.14), transparent 60%),
