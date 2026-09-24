@@ -2,21 +2,6 @@
 @{
     Layout = null;
 
-    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "?";
-    var deptName = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
-
-    var initials = string.Join("", fullName
-        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-        .Select(p => char.ToUpperInvariant(p[0])));
-    if (initials.Length == 0)
-    {
-        initials = "?";
-    }
-    else if (initials.Length > 2)
-    {
-        initials = initials.Substring(0, 2);
-    }
-
     string Slug(string code) => code.ToLowerInvariant().Replace(" ", "-");
 
     string Monogram(string code)
@@ -34,86 +19,146 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - MMES</title>
+    <title>Enterprise Dashboard - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" />
 </head>
 <body class="dashboard-page">
-    <header class="topbar">
-        <a class="brand" asp-controller="Home" asp-action="Index" title="Back to dashboard">
-            <img src="~/images/Logo.png" alt="HAENG SUNG logo">
-            <div>
-                <div class="name">HAENG SUNG</div>
-                <div class="tag">MMES · REV 3.0</div>
-            </div>
-        </a>
+    <partial name="_DashboardHeader" />
 
-        <nav class="dept-nav" aria-label="Departments">
-            @foreach (var tile in Model!)
-            {
-                <a href="#dept-@Slug(tile.Code)"><span class="dot"></span>@tile.Code</a>
-            }
-        </nav>
-
-        <div class="user-chip">
-            <span class="avatar">@initials</span>
-            <span class="who">
-                <span class="name">@fullName</span>
-                <span class="dept">@deptName</span>
-            </span>
-            <form asp-controller="Account" asp-action="Logout" method="post">
-                <button type="submit">Sign out</button>
-            </form>
+    <!-- Top Operational Plant Status Bar -->
+    <div class="plant-status-bar">
+        <div class="status-indicator">
+            <span class="pulse-dot"></span>
+            <span class="status-text">SYSTEM OPERATIONAL &bull; LIVE MES MATRIX</span>
         </div>
-    </header>
-
-    <main id="top">
-        <section class="glass about">
-            <div class="ghost-mark" aria-hidden="true"></div>
-            <div class="about-copy">
-                <p class="eyebrow">About Haeng Sung</p>
-                <h1>60+ years of precision electronics manufacturing</h1>
-                <p>
-                    Founded in 1964 in Busan, South Korea, HAENG SUNG is a global electronics component
-                    manufacturer producing PCB assemblies, wire harnesses, SMT lines, FFC, secondary
-                    batteries and window systems &mdash; with production sites across Korea, Vietnam,
-                    China, Thailand, Indonesia, Mexico and Poland.
-                </p>
-                <p class="motto">
-                    &ldquo;Creation and passion, challenge and dreams &mdash; building a safer, more
-                    convenient world through the highest quality and technology.&rdquo;
-                </p>
+        <div class="status-metrics">
+            <div class="metric-item">
+                <span class="metric-lbl">FACILITY:</span>
+                <span class="metric-val">HAENG SUNG MEXICO</span>
             </div>
-            <div class="fact-strip">
-                <span class="fact">FOUNDED 1964</span>
-                <span class="fact">HQ BUSAN, KR</span>
-                <span class="fact">7 COUNTRIES</span>
-                <span class="fact">CORE: SMT · PCBA</span>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">ACTIVE LINES:</span>
+                <span class="metric-val highlight-gold">6 SMT LINES</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">CURRENT SHIFT:</span>
+                <span class="metric-val">DAY SHIFT (08:00 - 20:00)</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">LATENCY:</span>
+                <span class="metric-val highlight-cyan">14ms</span>
+            </div>
+        </div>
+    </div>
+
+    <main id="top" class="dashboard-main">
+        <!-- Hero Industrial Command Banner -->
+        <section class="enterprise-hero">
+            <div class="hero-content">
+                <div class="hero-eyebrow">
+                    <span class="eyebrow-badge">GLOBAL MES PLATFORM</span>
+                    <span class="eyebrow-sub">INDUSTRY 4.0 READY</span>
+                </div>
+                <h1 class="hero-title">Haeng Sung Smart Manufacturing Command Center</h1>
+                <p class="hero-desc">
+                    Founded in 1964 in Busan, South Korea, HAENG SUNG is a pioneer in global electronics component manufacturing. 
+                    Powering real-time production analytics, SMT defect tracking, and high-precision assembly operations across 7 global plants.
+                </p>
+                <div class="hero-motto">
+                    &ldquo;Creation and passion, challenge and dreams &mdash; building a safer, more convenient world through highest quality technology.&rdquo;
+                </div>
+            </div>
+
+            <div class="hero-fact-grid">
+                <div class="fact-card">
+                    <div class="fact-num">1964</div>
+                    <div class="fact-lbl">FOUNDED (BUSAN, KR)</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">7</div>
+                    <div class="fact-lbl">GLOBAL PLANTS</div>
+                </div>
+                <div class="fact-card highlight">
+                    <div class="fact-num">12</div>
+                    <div class="fact-lbl">MEXICO SMT LINES</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">99.4%</div>
+                    <div class="fact-lbl">SYSTEM UPTIME</div>
+                </div>
             </div>
         </section>
 
-        <section>
-            <div class="section-head">
-                <h2>Departments</h2>
+        <!-- Department Modules Command Directory -->
+        <section class="dept-section">
+            <div class="section-header">
+                <div class="header-left">
+                    <span class="section-tag">SYSTEM MODULES</span>
+                    <h2 class="section-title">Department Execution Directory</h2>
+                </div>
+                <div class="header-right">
+                    <span class="dept-count">Total Modules: <strong>@Model!.Count</strong></span>
+                </div>
             </div>
+
             <div class="dept-grid">
                 @foreach (var tile in Model!)
                 {
-                    <div class="glass dept-card" id="dept-@Slug(tile.Code)">
-                        <div class="photo">
-                            <img src="@tile.ImagePath" alt="@tile.Code">
-                            <div class="row-top">
-                                <div class="monogram">@Monogram(tile.Code)</div>
-                                <span class="badge">Coming soon</span>
+                    var hasLink = !string.IsNullOrEmpty(tile.Href);
+                    var isSmt = tile.Code.Equals("SMT", StringComparison.OrdinalIgnoreCase);
+
+                    <div class="dept-card@(hasLink ? " is-live" : "")@(isSmt ? " is-featured" : "")" id="dept-@Slug(tile.Code)">
+                        <div class="card-image-wrap">
+                            <img src="@tile.ImagePath" alt="@tile.Code" loading="lazy">
+                            <div class="card-image-overlay"></div>
+                            <div class="card-top-bar">
+                                <div class="dept-monogram">@Monogram(tile.Code)</div>
+                                <span class="badge @(hasLink ? "live" : "soon")">
+                                    <span class="badge-dot"></span>
+                                    @(hasLink ? "SYSTEM READY" : "COMING SOON")
+                                </span>
                             </div>
                         </div>
-                        <div class="body">
-                            <div class="code">@tile.Code</div>
-                            <div class="desc">@tile.Desc</div>
+
+                        <div class="card-content">
+                            <div class="dept-code">@tile.Code</div>
+                            <div class="dept-desc">@tile.Desc</div>
+
+                            <div class="card-footer">
+                                @if (hasLink)
+                                {
+                                    <a href="@tile.Href" class="dept-action-btn primary">
+                                        <span>ENTER MODULE</span>
+                                        <svg class="arrow-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                            <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L11.44 8.5H2.75a.75.75 0 0 1 0-1.5h8.69L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+                                        </svg>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button class="dept-action-btn disabled" disabled>
+                                        <span>INACTIVE</span>
+                                    </button>
+                                }
+                            </div>
                         </div>
                     </div>
                 }
             </div>
         </section>
     </main>
+
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
 </body>
 </html>
+
