@@ -90,13 +90,42 @@
                     <h2 class="section-title">Available Applications</h2>
                 </div>
                 <div class="header-right">
-                    <span class="dept-count">Active Modules: <strong>1 / 3</strong></span>
+                    <span class="dept-count">Active Modules: <strong>2 / 4</strong></span>
                 </div>
             </div>
 
             <div class="dept-grid">
+                <!-- SMT Performance Dashboard (Active) -->
+                <div class="dept-card is-live is-featured" id="dept-smt-dashboard">
+                    <div class="card-image-wrap">
+                        <img src="~/images/smt.jpg" alt="SMT Performance Dashboard" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">DB</div>
+                            <span class="badge live">
+                                <span class="badge-dot"></span>
+                                SYSTEM READY
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">SMT Performance Dashboard</div>
+                        <div class="dept-desc">Real-time SMT Performance Insights, Pass Rates (SPI / MOI / AOI), Pickup Loss & Trends.</div>
+
+                        <div class="card-footer">
+                            <a asp-controller="Smt" asp-action="SmtDashboard" class="dept-action-btn primary">
+                                <span>ENTER DASHBOARD</span>
+                                <svg class="arrow-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                    <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L11.44 8.5H2.75a.75.75 0 0 1 0-1.5h8.69L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SMT Pass Rate (Active) -->
-                <div class="dept-card is-live is-featured" id="dept-smt-pass-rate">
+                <div class="dept-card is-live" id="dept-smt-pass-rate">
                     <div class="card-image-wrap">
                         <img src="~/images/smt.jpg" alt="SMT Pass Rate" loading="lazy">
                         <div class="card-image-overlay"></div>

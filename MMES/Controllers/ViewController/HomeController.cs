@@ -22,9 +22,9 @@ public class HomeController : Controller
     {
         var tiles = new List<DashboardDeptTile>
         {
-            new("Quality", "Quality Assurance", "/images/quality.jpg"),
-            new("CS", "Customer Service", "/images/CS.jpeg"),
-            new("SMT", "Surface Mount", "/images/smt.jpg"),
+            new("Quality", "Quality Assurance & PID Containment Control Center", "/images/quality.jpg", "/Quality"),
+            new("CS", "Customer Service & Factory Document Control Center", "/images/CS.jpeg", "/Cs"),
+            new("SMT", "Surface Mount Technology", "/images/smt.jpg", "/Smt"),
             new("PCBA", "PCB Assembly", "/images/pcba.jpg"),
             new("SCM", "Supply Chain", "/images/SCM.avif"),
             new("WH", "Warehouse", "/images/WH.jpg"),

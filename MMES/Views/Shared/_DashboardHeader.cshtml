@@ -1,0 +1,146 @@
+@{
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "?";
+    var deptName = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+    var initials = string.Join("", fullName
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Select(p => char.ToUpperInvariant(p[0])));
+    if (initials.Length == 0)
+    {
+        initials = "?";
+    }
+    else if (initials.Length > 2)
+    {
+        initials = initials.Substring(0, 2);
+    }
+
+    var navDepts = new[] { "Quality", "CS", "SMT", "PCBA", "SCM", "WH" };
+    string Slug(string code) => code.ToLowerInvariant().Replace(" ", "-");
+}
+<header class="app-header">
+    <div class="header-brand-group">
+        <a class="header-brand" asp-controller="Home" asp-action="Index" title="HAENG SUNG MES Dashboard">
+            <img src="~/images/Logo.png" alt="HAENG SUNG logo" class="brand-logo">
+            <span class="brand-title">HAENG SUNG</span>
+        </a>
+        <span class="header-divider">/</span>
+        <span class="system-badge">MEX-MES 3.0</span>
+    </div>
+
+    <nav class="header-nav" aria-label="Departments">
+        @foreach (var code in navDepts)
+        {
+            if (code == "SMT")
+            {
+                <div class="dept-dropdown">
+                    <button type="button" class="nav-tab dept-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                        <span>SMT</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="dept-dropdown-menu" role="menu">
+                        <div class="menu-section-label">SMT MANUFACTURING</div>
+                        <a role="menuitem" asp-controller="Smt" asp-action="SmtDashboard" class="menu-item">
+                            <span class="menu-icon">🖥️</span>
+                            <div class="menu-details">
+                                <span class="menu-title">SMT Dashboard</span>
+                                <span class="menu-desc">Real-time SMT Performance Insights & Analytics</span>
+                            </div>
+                        </a>
+                        <a role="menuitem" asp-controller="Smt" asp-action="ProductionRate" class="menu-item">
+                            <span class="menu-icon">📊</span>
+                            <div class="menu-details">
+                                <span class="menu-title">SMT Pass Rate</span>
+                                <span class="menu-desc">Real-time UP & Yield Monitoring</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            }
+            else if (code == "Quality")
+            {
+                <div class="dept-dropdown">
+                    <button type="button" class="nav-tab dept-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                        <span>QUALITY</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="dept-dropdown-menu" role="menu">
+                        <div class="menu-section-label">QUALITY CONTROL &amp; QA</div>
+                        <a role="menuitem" asp-controller="Quality" asp-action="Index" class="menu-item">
+                            <span class="menu-icon">🏢</span>
+                            <div class="menu-details">
+                                <span class="menu-title">Quality Dashboard</span>
+                                <span class="menu-desc">QA / QC Department Center</span>
+                            </div>
+                        </a>
+                        <a role="menuitem" asp-controller="Quality" asp-action="BlockRelease" class="menu-item">
+                            <span class="menu-icon">🚫</span>
+                            <div class="menu-details">
+                                <span class="menu-title">Block / Release Production</span>
+                                <span class="menu-desc">PID Lock &amp; Unlock Management</span>
+                            </div>
+                        </a>
+                        <a role="menuitem" asp-controller="Quality" asp-action="OqcScanout" class="menu-item">
+                            <span class="menu-icon">📊</span>
+                            <div class="menu-details">
+                                <span class="menu-title">OQC Inspection Scanout</span>
+                                <span class="menu-desc">Hourly Scanout Rate &amp; 2-Hour UPH Matrix</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            }
+            else if (code == "CS")
+            {
+                <div class="dept-dropdown">
+                    <button type="button" class="nav-tab dept-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                        <span>CS</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="dept-dropdown-menu" role="menu">
+                        <div class="menu-section-label">CUSTOMER SERVICE &amp; DMS</div>
+                        <a role="menuitem" asp-controller="Cs" asp-action="Index" class="menu-item">
+                            <span class="menu-icon">🏢</span>
+                            <div class="menu-details">
+                                <span class="menu-title">CS Dashboard</span>
+                                <span class="menu-desc">Customer Service Department Center</span>
+                            </div>
+                        </a>
+                        <a role="menuitem" asp-controller="Document" asp-action="Index" class="menu-item">
+                            <span class="menu-icon">📁</span>
+                            <div class="menu-details">
+                                <span class="menu-title">DMS Documents</span>
+                                <span class="menu-desc">Factory Document Management System</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a class="nav-tab" asp-controller="Home" asp-action="Index" asp-fragment="@("dept-" + Slug(code))">@code</a>
+            }
+        }
+    </nav>
+
+    <div class="header-user-area">
+        <div class="user-profile">
+            <span class="user-avatar">@initials</span>
+            <div class="user-info">
+                <span class="user-name">@fullName</span>
+                <span class="user-role">@deptName</span>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
+                <button type="submit" class="logout-btn" title="Sign out of system">Sign out</button>
+            </form>
+        </div>
+    </div>
+</header>
+<script src="~/js/topbar.js" asp-append-version="true"></script>
+
+

@@ -151,10 +151,13 @@ body.dashboard-page::after{
   opacity: 1;
 }
 
-/* Floating Submenu Card */
+/* Floating Submenu Card
+   position:fixed (instead of absolute) so the menu escapes the
+   `overflow-x: auto` clipping on .header-nav at the mobile breakpoint below
+   — top/left are computed and set inline by topbar.js on open. */
 .dept-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 2px);
+  position: fixed;
+  top: 0;
   left: 0;
   min-width: 260px;
   display: none;
@@ -164,7 +167,7 @@ body.dashboard-page::after{
   border: 1px solid var(--border-strong) !important;
   border-radius: 8px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-  z-index: 999;
+  z-index: 1001;
 }
 .dept-dropdown.is-open .dept-dropdown-menu {
   display: flex;

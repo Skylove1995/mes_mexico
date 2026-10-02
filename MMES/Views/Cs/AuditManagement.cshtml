@@ -1,0 +1,2011 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Audit Management Portal";
+    var userRole = User.FindFirst("Role")?.Value ?? User.FindFirst("auth")?.Value ?? "";
+    var isAdmin = User.IsInRole("Admin") || string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audit Management System - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    
+    <!-- FullCalendar & Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* Theme Variables for Dynamic Light & Dark Mode Contrast */
+        :root, html[data-theme="light"] {
+            --surface-bg: #ffffff;
+            --header-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --input-bg: #ffffff;
+            --hover-bg: #f1f5f9;
+            --table-header-bg: #f8fafc;
+            --table-row-hover: #f8fafc;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+
+        html[data-theme="dark"] {
+            --surface-bg: #1e293b;
+            --header-bg: #0f172a;
+            --border-color: #334155;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #0f172a;
+            --hover-bg: #334155;
+            --table-header-bg: #0f172a;
+            --table-row-hover: #111827;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Audit Module Layout (Full Width Responsive) */
+        .audit-layout-wrapper {
+            display: flex;
+            gap: 24px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            padding: 24px 32px;
+            align-items: stretch; /* Stretch sidebar height to match main content */
+        }
+
+        /* Left Sidebar Navigation (Equal Height with Calendar/Main Content) */
+        .audit-sidebar-nav {
+            width: 270px;
+            flex-shrink: 0;
+            background: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: var(--card-shadow);
+            align-self: stretch; /* Kéo dài chiều cao bằng chiều cao của bảng calendar */
+            box-sizing: border-box;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px 16px 12px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .brand-icon {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: #ffffff;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+        }
+
+        .brand-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Vertical Tab Buttons in Sidebar */
+        .sidebar-menu .audit-tab-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: left;
+        }
+
+        .sidebar-menu .audit-tab-btn:hover {
+            background: var(--hover-bg);
+            color: var(--text-color);
+            transform: translateX(4px);
+        }
+
+        .sidebar-menu .audit-tab-btn.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+            transform: translateX(4px);
+        }
+
+        .tab-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Sidebar Footer Status Widget */
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 18px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .sidebar-status-card {
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
+        /* Main Content Container (Flex Fill 100%) */
+        .audit-main-content {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+        }
+
+        /* Quick KPI Strip Bar */
+        .kpi-strip-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        @@media (max-width: 992px) {
+            .audit-layout-wrapper {
+                flex-direction: column;
+                padding: 16px;
+            }
+            .audit-sidebar-nav {
+                width: 100%;
+                align-self: auto;
+            }
+            .kpi-strip-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .kpi-strip-item {
+            background: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--card-shadow);
+        }
+
+        .kpi-strip-lbl {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .kpi-strip-val {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-color);
+        }
+
+        .kpi-strip-val.val-danger { color: #ef4444; }
+        .kpi-strip-val.val-success { color: #10b981; }
+        .kpi-strip-val.val-warning { color: #f59e0b; }
+
+        /* Tab Content Panel */
+        .audit-tab-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .audit-tab-panel.active {
+            display: block;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Controls & Filters Bar */
+        .audit-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .audit-select, .audit-input {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: #ffffff;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(14, 165, 233, 0.45);
+        }
+
+        .btn-success-custom {
+            background: #10b981;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 9px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-success-custom:hover { background: #059669; }
+
+        /* FullCalendar Custom Container */
+        .calendar-card-wrap {
+            background: var(--surface-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 24px;
+        }
+
+        /* ==================================================================== */
+        /* Ultra-Modern FullCalendar Custom Skin (MEX-MES 3.0 Design System)   */
+        /* ==================================================================== */
+        .fc .fc-toolbar {
+            margin-bottom: 24px !important;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.6rem !important;
+            font-weight: 800 !important;
+            color: var(--text-color) !important;
+            letter-spacing: -0.02em !important;
+        }
+
+        /* Prev / Next & Today Buttons */
+        .fc .fc-button-group {
+            gap: 4px;
+            background: var(--hover-bg);
+            padding: 4px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .fc .fc-button-primary {
+            background: transparent !important;
+            border: none !important;
+            color: var(--text-color) !important;
+            font-weight: 700 !important;
+            font-size: 0.88rem !important;
+            padding: 8px 16px !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .fc .fc-button-primary:hover {
+            background: var(--surface-bg) !important;
+            color: #2563eb !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+        }
+
+        .fc .fc-button-primary:not(:disabled).fc-button-active,
+        .fc .fc-button-primary:not(:disabled):active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+        }
+
+        .fc .fc-today-button {
+            background: var(--text-color) !important;
+            color: var(--surface-bg) !important;
+            border-radius: 12px !important;
+            padding: 8px 18px !important;
+            font-weight: 700 !important;
+            border: 1px solid var(--border-color) !important;
+            margin-left: 8px !important;
+            text-transform: capitalize !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .fc .fc-today-button:hover:not(:disabled) {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        }
+
+        .fc .fc-today-button:disabled {
+            opacity: 0.5 !important;
+            background: var(--hover-bg) !important;
+            color: var(--text-muted) !important;
+        }
+
+        /* View Switcher Container (Month / Week / List) */
+        .fc .fc-toolbar-chunk:last-child {
+            background: var(--hover-bg);
+            padding: 4px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        /* Calendar Grid Header (Sun, Mon, Tue...) */
+        .fc .fc-col-header-cell {
+            background: var(--table-header-bg) !important;
+            padding: 12px 0 !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            font-size: 0.78rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+        }
+
+        /* FullCalendar Inner Elements & List View */
+        .fc .fc-scrollgrid {
+            border-color: var(--border-color) !important;
+        }
+
+        .fc .fc-view-harness {
+            background: var(--surface-bg) !important;
+        }
+
+        .fc .fc-daygrid-day-frame {
+            background: var(--surface-bg) !important;
+        }
+
+        /* Day Cells & Borders */
+        .fc .fc-daygrid-day {
+            border-color: var(--border-color) !important;
+            transition: background 0.2s ease;
+        }
+
+        .fc .fc-daygrid-day:hover {
+            background: rgba(37, 99, 235, 0.04) !important;
+        }
+
+        .fc .fc-daygrid-day-number {
+            font-size: 0.88rem !important;
+            font-weight: 700 !important;
+            color: var(--text-color) !important;
+            padding: 8px 10px !important;
+            text-decoration: none !important;
+        }
+
+        /* Today Day Cell Highlight */
+        .fc .fc-day-today {
+            background: rgba(37, 99, 235, 0.08) !important;
+        }
+
+        .fc .fc-day-today .fc-daygrid-day-number {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4px;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+        }
+
+        /* FullCalendar List View Styling */
+        .fc .fc-list {
+            border-color: var(--border-color) !important;
+        }
+
+        .fc .fc-list-day-cushion {
+            background: var(--table-header-bg) !important;
+            color: var(--text-color) !important;
+        }
+
+        .fc .fc-list-event:hover td {
+            background: var(--table-row-hover) !important;
+        }
+
+        .fc .fc-list-event td {
+            border-color: var(--border-color) !important;
+            color: var(--text-color) !important;
+        }
+
+        /* Event Cards / Pills on Calendar */
+        .fc-daygrid-event {
+            border-radius: 8px !important;
+            margin: 2px 4px !important;
+            padding: 5px 8px !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12) !important;
+            transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+        .fc-daygrid-event:hover {
+            transform: translateY(-1px) scale(1.02) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+        }
+
+        .fc-event-title {
+            font-weight: 700 !important;
+            padding: 0 2px !important;
+        }
+
+        /* Checksheet & Session Table Contrast Fix */
+        .conduct-table-wrap {
+            background: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .conduct-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            color: var(--text-color);
+        }
+
+        .conduct-table th {
+            background: var(--table-header-bg);
+            padding: 14px 16px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .conduct-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-color) !important;
+        }
+
+        .conduct-table tbody tr:hover {
+            background: var(--table-row-hover);
+        }
+
+        .category-header-row td {
+            background: var(--hover-bg) !important;
+            color: #2563eb !important;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        /* Score Rubric Buttons */
+        .rubric-btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .score-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .score-btn.s10 { color: #16a34a; }
+        .score-btn.s10.selected { background: #16a34a; color: #fff; border-color: #16a34a; }
+        .score-btn.s8 { color: #2563eb; }
+        .score-btn.s8.selected { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .score-btn.s6 { color: #d97706; }
+        .score-btn.s6.selected { background: #d97706; color: #fff; border-color: #d97706; }
+        .score-btn.s4 { color: #ea580c; }
+        .score-btn.s4.selected { background: #ea580c; color: #fff; border-color: #ea580c; }
+        .score-btn.s2 { color: #dc2626; }
+        .score-btn.s2.selected { background: #dc2626; color: #fff; border-color: #dc2626; }
+        .score-btn.s0 { color: #991b1b; }
+        .score-btn.s0.selected { background: #991b1b; color: #fff; border-color: #991b1b; }
+
+        /* Badge Statuses */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .status-draft { background: #fef3c7; color: #92400e; }
+        .status-submitted { background: #dbeafe; color: #1e40af; }
+        .status-checked { background: #cff4fc; color: #055160; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-open { background: #fee2e2; color: #991b1b; }
+        .status-closed { background: #e2e8f0; color: #475569; }
+
+        /* FullCalendar Interactive Cursor */
+        .fc-event {
+            cursor: pointer !important;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .fc-event:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Card Header Styles for Conduct Audit (Image 3 inspired - Sleek Tone Trắng Đen) */
+        .audit-header-card {
+            background: var(--surface-bg, #ffffff);
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-top-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed var(--border-color, #e2e8f0);
+            padding-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .icon-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            font-size: 1.6rem;
+            background: var(--hover-bg, #f1f5f9);
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color, #cbd5e1);
+        }
+
+        .card-main-title {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-color, #0f172a);
+            letter-spacing: -0.02em;
+        }
+
+        .highlight-text {
+            color: #2563eb;
+        }
+
+        .card-subtitle {
+            margin: 4px 0 0 0;
+            font-size: 0.85rem;
+            color: var(--text-muted, #64748b);
+        }
+
+        .session-info-badge {
+            background: #0f172a;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 8px 16px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        /* 3 Filters Grid: 1. Audit Type, 2. Dept, 3. Ngày */
+        .audit-filter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        @@media (max-width: 900px) {
+            .audit-filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .field-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted, #64748b);
+            margin-bottom: 6px;
+        }
+
+        .audit-select-modern, .audit-input-modern {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color, #cbd5e1);
+            background: var(--input-bg, #ffffff);
+            color: var(--text-color, #0f172a);
+            font-size: 0.92rem;
+            font-weight: 600;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .audit-select-modern:focus, .audit-input-modern:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Progress Bar Card */
+        .audit-progress-card {
+            background: var(--header-bg, #f8fafc);
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .progress-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .pulse-dot-sm {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-right: 6px;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .badge-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.8rem;
+        }
+
+        .badge-ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-ng {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .progress-track {
+            height: 10px;
+            background: var(--border-color, #e2e8f0);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #10b981);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        /* Disabled Modern Input & Select Styles */
+        .audit-select-modern:disabled, .audit-input-modern:disabled {
+            background-color: var(--hover-bg, #f1f5f9) !important;
+            color: var(--text-color, #0f172a) !important;
+            opacity: 0.9;
+            cursor: not-allowed;
+            border-color: var(--border-color, #cbd5e1);
+        }
+
+        /* Camera Button & Evidence Photo Thumbnails */
+        .btn-camera-custom {
+            background: #0284c7;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 7px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .btn-camera-custom:hover { background: #0369a1; }
+
+        .evidence-preview-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .evidence-thumb-box {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color, #cbd5e1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .evidence-thumb-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-thumb-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #ffffff;
+            font-size: 11px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .item-action-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .item-tools-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Mobile Responsive Card Layout (< 768px) */
+        @@media (max-width: 768px) {
+            .audit-container {
+                padding: 12px;
+            }
+
+            .audit-nav-tabs {
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .audit-tab-btn {
+                padding: 8px 14px;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            .conduct-table-wrap {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .conduct-table,
+            .conduct-table tbody,
+            .conduct-table tr,
+            .conduct-table td {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .conduct-table thead {
+                display: none !important; /* Hide Desktop Table Header on Mobile */
+            }
+
+            .conduct-table tr[data-item-id] {
+                background: var(--surface-bg, #ffffff);
+                border: 1px solid var(--border-color, #cbd5e1);
+                border-radius: 16px;
+                padding: 16px;
+                margin-bottom: 16px;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+            }
+
+            .conduct-table td {
+                border-bottom: none !important;
+                padding: 6px 0 !important;
+            }
+
+            .category-header-row td {
+                border-radius: 10px;
+                margin-bottom: 12px;
+                padding: 10px 14px !important;
+                font-size: 0.9rem;
+            }
+
+            /* Touch-Friendly Full-Width Rubric Grid on Mobile */
+            .rubric-btn-group {
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 6px;
+                margin: 10px 0;
+            }
+
+            .score-btn {
+                width: 100% !important;
+                height: 42px !important;
+                font-size: 0.95rem !important;
+                border-radius: 8px;
+            }
+
+            .mobile-hide-seq, .mobile-hide-cat {
+                display: none !important;
+            }
+        }
+
+        /* Summary Stat Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--surface-bg, #ffffff);
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .kpi-title { font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+        .kpi-value { font-size: 2rem; font-weight: 800; color: #0f172a; margin-top: 8px; }
+
+        /* Modal Backdrop & Dialog */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-card {
+            background: var(--surface-bg, #ffffff);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="dashboard-page">
+    <partial name="_DashboardHeader" />
+
+    <!-- Status Bar -->
+    <div class="plant-status-bar">
+        <div class="status-indicator">
+            <span class="pulse-dot"></span>
+            <span class="status-text">CS DIVISION &bull; AUDIT MANAGEMENT MATRIX (LPA / 5S / ESD)</span>
+        </div>
+        <div class="status-metrics">
+            <div class="metric-item">
+                <span class="metric-lbl">ROLE:</span>
+                <span class="metric-val">@(isAdmin ? "ADMINISTRATOR (FULL ACCESS)" : "AUDITOR / OPERATOR")</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">AUDIT ENGINE:</span>
+                <span class="metric-val highlight-gold">ONLINE &bull; SCHEMA 2026.09</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="audit-layout-wrapper">
+        <!-- Left Sidebar Navigation -->
+        <aside class="audit-sidebar-nav">
+            <div class="sidebar-brand">
+                <div class="brand-icon">⚡</div>
+                <div>
+                    <h3 class="brand-title">MEX-MES 3.0</h3>
+                    <span class="brand-sub">Audit System</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <button type="button" class="audit-tab-btn active" onclick="switchTab('schedule', this)">
+                    <span class="tab-icon">📅</span>
+                    <span class="tab-label">1. Audit Schedule</span>
+                </button>
+                <button type="button" class="audit-tab-btn" onclick="switchTab('conduct', this)">
+                    <span class="tab-icon">📝</span>
+                    <span class="tab-label">2. Conduct Audit</span>
+                </button>
+                <button type="button" class="audit-tab-btn" onclick="switchTab('issues', this)">
+                    <span class="tab-icon">⚠️</span>
+                    <span class="tab-label">3. Issue Management</span>
+                </button>
+                <button type="button" class="audit-tab-btn" onclick="switchTab('summary', this)">
+                    <span class="tab-icon">📊</span>
+                    <span class="tab-label">4. Audit Summary</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-status-card">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="pulse-dot-sm"></span>
+                        <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-color);">SYSTEM ONLINE</span>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                        MEX-MES 3.0 &bull; LPA 2026
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="audit-main-content">
+            <!-- ==================================================================== -->
+            <!-- TAB 1: AUDIT SCHEDULE -->
+            <!-- ==================================================================== -->
+            <section id="tab-schedule" class="audit-tab-panel active">
+                <div class="audit-filter-bar">
+                    <div class="filter-group">
+                        <label><strong>Audit Type:</strong></label>
+                        <select id="schedAuditType" class="audit-select" onchange="loadScheduleSessions()">
+                            <option value="0">-- All Types --</option>
+                        </select>
+
+                        <label><strong>Department:</strong></label>
+                        <select id="schedDept" class="audit-select" onchange="loadScheduleSessions()">
+                            <option value="0">-- All Departments --</option>
+                        </select>
+
+                        <label><strong>Year:</strong></label>
+                        <select id="schedYear" class="audit-select" onchange="loadScheduleSessions()">
+                            <option value="2026" selected>2026</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-primary-custom" onclick="openCreateSessionModal()">
+                        ➕ <span>Schedule New Audit Round</span>
+                    </button>
+                </div>
+
+                <!-- Quick KPI Stats Strip Bar (Inspired by Design Mockup) -->
+                <div class="kpi-strip-bar">
+                    <div class="kpi-strip-item">
+                        <span class="kpi-strip-lbl">Total Audits</span>
+                        <span class="kpi-strip-val" id="kpiStripTotal">(0)</span>
+                    </div>
+                    <div class="kpi-strip-item">
+                        <span class="kpi-strip-lbl">Open CAPAs</span>
+                        <span class="kpi-strip-val val-danger" id="kpiStripOpen">(0)</span>
+                    </div>
+                    <div class="kpi-strip-item">
+                        <span class="kpi-strip-lbl">Total Score</span>
+                        <span class="kpi-strip-val val-success" id="kpiStripScore">(0%)</span>
+                    </div>
+                    <div class="kpi-strip-item">
+                        <span class="kpi-strip-lbl">Pending Audits</span>
+                        <span class="kpi-strip-val val-warning" id="kpiStripPending">(0)</span>
+                    </div>
+                </div>
+
+                <!-- FullCalendar Container -->
+                <div class="calendar-card-wrap">
+                    <div id="auditCalendar" style="min-height: 650px;"></div>
+                </div>
+
+            <!-- Sessions List Table -->
+            <div class="conduct-table-wrap">
+                <table class="conduct-table">
+                    <thead>
+                        <tr>
+                            <th>Round ID</th>
+                            <th>Audit Type</th>
+                            <th>Department</th>
+                            <th>Month / Date</th>
+                            <th>Shift</th>
+                            <th>Auditor</th>
+                            <th>Score %</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedSessionTableBody">
+                        <tr><td colspan="9" style="text-align:center;">Loading audit schedule sessions...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- TAB 2: CONDUCT AUDIT -->
+        <!-- ==================================================================== -->
+        <section id="tab-conduct" class="audit-tab-panel">
+            <!-- Header Card Inspired by Image 3 with Sleek Monochrome Tone -->
+            <div class="audit-header-card">
+                <div class="card-top-title">
+                    <div class="icon-title-wrap">
+                        <span class="card-icon">📋</span>
+                        <div>
+                            <h2 class="card-main-title">Audit Checksheet <span class="highlight-text">Details</span></h2>
+                            <p class="card-subtitle">Perform evaluation of product &amp; process quality inspection criteria</p>
+                        </div>
+                    </div>
+                    <div id="conductSessionInfo" class="session-info-badge">
+                        Round #0 | Dept: -- | Score: 0% (Grade N/A)
+                    </div>
+                </div>
+
+                <!-- 3 Locked Pre-filled Filter Fields: 1. AUDIT TYPE, 2. DEPARTMENT (DEPT), 3. AUDIT DATE -->
+                <div class="audit-filter-grid">
+                    <div>
+                        <label class="field-label">🏷️ 1. AUDIT TYPE</label>
+                        <select id="conductFilterType" class="audit-select-modern" disabled onchange="onConductFilterChange()">
+                            <option value="0">-- All Audit Types --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">🏢 2. DEPARTMENT (DEPT)</label>
+                        <select id="conductFilterDept" class="audit-select-modern" disabled onchange="onConductFilterChange()">
+                            <option value="0">-- All Departments --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">📅 3. AUDIT DATE</label>
+                        <input type="date" id="conductFilterDate" class="audit-input-modern" disabled onchange="onConductFilterChange()" />
+                    </div>
+                </div>
+
+                <!-- Active Session Picker Dropdown -->
+                <div style="margin-bottom: 16px;">
+                    <label class="field-label">📌 SELECT ACTIVE AUDIT SESSION</label>
+                    <select id="conductSessionSelect" class="audit-select-modern" style="font-weight:700;" onchange="loadConductChecksheet()">
+                        <option value="0">-- Choose Active Audit Session --</option>
+                    </select>
+                </div>
+
+                <!-- Evaluation Progress Card -->
+                <div class="audit-progress-card">
+                    <div class="progress-info-row">
+                        <div style="font-size: 0.9rem;">
+                            <span class="pulse-dot-sm"></span>
+                            <strong>Evaluation Progress:</strong>
+                            <span id="conductProgressText" style="margin-left: 8px; font-weight:700; color: var(--text-color, #0f172a);">0 / 0 Completed (0%)</span>
+                        </div>
+                        <div>
+                            <span id="badgeOkCount" class="badge-pill badge-ok">0 OK</span>
+                            <span id="badgeNgCount" class="badge-pill badge-ng">0 NG</span>
+                        </div>
+                    </div>
+                    <div class="progress-track">
+                        <div id="conductProgressBar" class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checksheet Items Grid -->
+            <div class="conduct-table-wrap">
+                <table class="conduct-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Seq</th>
+                            <th>Category</th>
+                            <th style="width: 40%;">Audit Item / Requirement</th>
+                            <th>Scoring Rubric (0 - 10)</th>
+                            <th>Notes / Evidence</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="conductChecksheetBody">
+                        <tr><td colspan="6" style="text-align:center;">Please select an active audit session to load the checksheet.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Sign-Off Action Bar -->
+            <div class="audit-filter-bar" style="margin-top: 24px; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn-primary-custom" style="background: #64748b;" onclick="submitConductForm('draft')">
+                    💾 <span>Save Draft</span>
+                </button>
+
+                <button type="button" class="btn-primary-custom" onclick="submitConductForm('submit')">
+                    📤 <span>Submit Session</span>
+                </button>
+
+                <button type="button" class="btn-success-custom" onclick="submitConductForm('check')">
+                    ✔️ <span>Check &amp; Sign-off</span>
+                </button>
+
+                <button type="button" class="btn-primary-custom" style="background: #7c3aed;" onclick="submitConductForm('approve')">
+                    👑 <span>Admin Approve</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- TAB 3: ISSUE MANAGEMENT (CAPA) -->
+        <!-- ==================================================================== -->
+        <section id="tab-issues" class="audit-tab-panel">
+            <div class="audit-filter-bar">
+                <div class="filter-group">
+                    <label><strong>Status:</strong></label>
+                    <select id="issueStatusFilter" class="audit-select" onchange="loadIssueList()">
+                        <option value="0">-- All Statuses --</option>
+                    </select>
+
+                    <label><strong>Department:</strong></label>
+                    <select id="issueDeptFilter" class="audit-select" onchange="loadIssueList()">
+                        <option value="0">-- All Depts --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="conduct-table-wrap">
+                <table class="conduct-table">
+                    <thead>
+                        <tr>
+                            <th>Issue ID</th>
+                            <th>Dept</th>
+                            <th>Category</th>
+                            <th>Description / Requirement</th>
+                            <th>PIC</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Evidences</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="issueTableBody">
+                        <tr><td colspan="9" style="text-align:center;">Loading audit CAPA issues...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- TAB 4: AUDIT SUMMARY -->
+        <!-- ==================================================================== -->
+        <section id="tab-summary" class="audit-tab-panel">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Audit Rounds</div>
+                    <div class="kpi-value" id="kpiTotalRounds">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Average Audit Score</div>
+                    <div class="kpi-value" style="color: #2563eb;" id="kpiAvgScore">0%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Issues (NC)</div>
+                    <div class="kpi-value" style="color: #dc2626;" id="kpiTotalIssues">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Open CAPAs</div>
+                    <div class="kpi-value" style="color: #d97706;" id="kpiOpenIssues">0</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <div class="calendar-card-wrap">
+                    <h3>Department Performance Matrix</h3>
+                    <canvas id="chartDeptScore" style="max-height: 320px;"></canvas>
+                </div>
+                <div class="calendar-card-wrap">
+                    <h3>CAPA Resolution Status</h3>
+                    <canvas id="chartIssueStatus" style="max-height: 320px;"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+    <!-- Create Audit Session Modal -->
+    <div id="modalCreateSession" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0;">Schedule New Audit Round</h3>
+            <form id="formCreateSession" onsubmit="handleCreateSessionSubmit(event)">
+                <div style="margin-bottom: 14px;">
+                    <label>Audit Type:</label>
+                    <select id="modalAuditTypeId" class="audit-select" style="width: 100%;" required></select>
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label>Target Department:</label>
+                    <select id="modalDeptId" class="audit-select" style="width: 100%;" required></select>
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label>Audit Date / Month:</label>
+                    <input type="date" id="modalAuditMonth" class="audit-input" style="width: 100%;" required />
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label>Shift:</label>
+                    <select id="modalShift" class="audit-select" style="width: 100%;">
+                        <option value="Day">Day Shift</option>
+                        <option value="Night">Night Shift</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label>Assign Auditor:</label>
+                    <select id="modalAuditorId" class="audit-select" style="width: 100%;"></select>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label>Notes:</label>
+                    <input type="text" id="modalNote" class="audit-input" style="width: 100%;" placeholder="e.g. WH Monthly LPA Round 1" />
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" class="audit-tab-btn" onclick="closeCreateSessionModal()">Cancel</button>
+                    <button type="submit" class="btn-primary-custom">Create Round</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bilingual Incomplete Evaluation Warning Modal -->
+    <div id="modalUnansweredWarning" class="modal-overlay">
+        <div class="modal-card" style="border-top: 6px solid #dc2626; max-width: 560px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <span style="font-size: 2.2rem;">⚠️</span>
+                <div>
+                    <h3 style="margin: 0; color: #dc2626; font-size: 1.25rem;">Incomplete Audit Evaluation</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 0.85rem; color: #64748b;">Advertencia de Evaluación de Auditoría Incompleta</p>
+                </div>
+            </div>
+
+            <div style="background: var(--header-bg, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                <!-- English Section -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-weight: 700; color: var(--text-color, #0f172a); font-size: 0.92rem; margin-bottom: 4px;">
+                        🇬🇧 English:
+                    </div>
+                    <div style="font-size: 0.88rem; color: #475569; line-height: 1.4;">
+                        All evaluation criteria must be scored before submitting the audit round. Please complete the remaining questions.
+                    </div>
+                </div>
+
+                <!-- Spanish (Mexico) Section -->
+                <div style="border-top: 1px dashed var(--border-color, #cbd5e1); padding-top: 12px;">
+                    <div style="font-weight: 700; color: var(--text-color, #0f172a); font-size: 0.92rem; margin-bottom: 4px;">
+                        🇲🇽 Español (México):
+                    </div>
+                    <div style="font-size: 0.88rem; color: #475569; line-height: 1.4;">
+                        Todos los criterios de evaluación deben ser calificados antes de enviar la ronda de auditoría. Por favor complete las preguntas restantes.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remaining Items Highlight -->
+            <div style="margin-bottom: 24px; padding: 12px 16px; background: #fef2f2; border-radius: 10px; border: 1px solid #fecaca; color: #991b1b; font-size: 0.9rem;">
+                <strong>Remaining Questions / Elementos Pendientes:</strong>
+                <div id="unansweredItemsText" style="font-weight: 800; font-size: 1.05rem; margin-top: 4px; color: #dc2626; word-break: break-word;">
+                    #3, #29
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+                <button type="button" class="btn-primary-custom" style="background: #dc2626;" onclick="closeUnansweredModalAndScroll()">
+                    🔍 <span>View Unanswered Items / Ver Pendientes</span>
+                </button>
+                <button type="button" class="audit-tab-btn" onclick="closeUnansweredModal()">
+                    <span>Close / Cerrar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let calendarInstance = null;
+        let deptScoreChart = null;
+        let issueStatusChart = null;
+        let allActiveSessions = [];
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            await loadMetaOptions();
+            initCalendar();
+            loadScheduleSessions();
+            loadConductActiveSessions();
+        });
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.audit-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.audit-tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            var targetBtn = btnElement || (event && event.currentTarget ? event.currentTarget : null);
+            if (targetBtn) targetBtn.classList.add('active');
+            var targetPanel = document.getElementById('tab-' + tabName);
+            if (targetPanel) targetPanel.classList.add('active');
+
+            if (tabName === 'schedule' && calendarInstance) {
+                setTimeout(() => calendarInstance.render(), 100);
+            } else if (tabName === 'conduct') {
+                loadConductActiveSessions();
+            } else if (tabName === 'issues') {
+                loadIssueList();
+            } else if (tabName === 'summary') {
+                loadSummaryMetrics();
+            }
+        }
+
+        async function loadMetaOptions() {
+            try {
+                const [resTypes, resDepts, resUsers, resStatuses] = await Promise.all([
+                    fetch('/api/audit/meta/types').then(r => r.json()),
+                    fetch('/api/audit/meta/depts').then(r => r.json()),
+                    fetch('/api/audit/meta/users').then(r => r.json()),
+                    fetch('/api/audit/meta/statuses').then(r => r.json())
+                ]);
+
+                if (resTypes.success) {
+                    const opts = resTypes.data.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+                    document.getElementById('schedAuditType').innerHTML = '<option value="0">-- All Audit Types --</option>' + opts;
+                    document.getElementById('conductFilterType').innerHTML = '<option value="0">-- All Audit Types --</option>' + opts;
+                    document.getElementById('modalAuditTypeId').innerHTML = opts;
+                }
+
+                if (resDepts.success) {
+                    const opts = resDepts.data.map(d => {
+                        const label = (d.code && d.name && d.code !== d.name) ? `${d.code} - ${d.name}` : (d.name || d.code);
+                        return `<option value="${d.id}">${label}</option>`;
+                    }).join('');
+                    document.getElementById('schedDept').innerHTML = '<option value="0">-- All Departments --</option>' + opts;
+                    document.getElementById('conductFilterDept').innerHTML = '<option value="0">-- All Departments --</option>' + opts;
+                    document.getElementById('issueDeptFilter').innerHTML = '<option value="0">-- All Departments --</option>' + opts;
+                    document.getElementById('modalDeptId').innerHTML = opts;
+                }
+
+                if (resUsers.success) {
+                    const opts = resUsers.data.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+                    document.getElementById('modalAuditorId').innerHTML = '<option value="">-- Unassigned --</option>' + opts;
+                }
+
+                if (resStatuses.success) {
+                    const opts = resStatuses.data.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                    document.getElementById('issueStatusFilter').innerHTML = '<option value="0">-- All Statuses --</option>' + opts;
+                }
+            } catch (err) {
+                console.error("Failed to load meta options:", err);
+            }
+        }
+
+        function initCalendar() {
+            var calendarEl = document.getElementById('auditCalendar');
+            calendarInstance = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listMonth'
+                },
+                events: [],
+                eventClick: function (info) {
+                    if (info.event && info.event.id) {
+                        openConductForSession(info.event.id);
+                    }
+                }
+            });
+            calendarInstance.render();
+        }
+
+        async function loadConductActiveSessions() {
+            try {
+                var res = await fetch('/api/audit/active-sessions').then(r => r.json());
+                if (!res.success) return;
+
+                allActiveSessions = res.data;
+                renderConductSessionDropdown(allActiveSessions);
+            } catch (err) {
+                console.error("Failed to load conduct active sessions:", err);
+            }
+        }
+
+        function renderConductSessionDropdown(sessions) {
+            var select = document.getElementById('conductSessionSelect');
+            var currentVal = select.value;
+            var opts = sessions.map(s => {
+                var dateStr = s.auditMonth ? s.auditMonth.split('T')[0] : '';
+                return `<option value="${s.id}">Round #${s.id} - ${s.deptName} (${s.auditTypeName}) - ${dateStr} [${s.statusName}]</option>`;
+            }).join('');
+
+            select.innerHTML = '<option value="0">-- Choose Active Audit Session --</option>' + opts;
+
+            if (currentVal && sessions.some(s => s.id == currentVal)) {
+                select.value = currentVal;
+            } else if (sessions.length > 0) {
+                select.value = sessions[0].id;
+                loadConductChecksheet();
+            } else {
+                document.getElementById('conductChecksheetBody').innerHTML = '<tr><td colspan="6" style="text-align:center;">No matching audit sessions found.</td></tr>';
+                updateConductProgressBar(0, 0, 0, 0);
+            }
+        }
+
+        function onConductFilterChange() {
+            var typeId = parseInt(document.getElementById('conductFilterType').value) || 0;
+            var deptId = parseInt(document.getElementById('conductFilterDept').value) || 0;
+            var dateVal = document.getElementById('conductFilterDate').value;
+
+            var filtered = allActiveSessions.filter(s => {
+                var matchType = (typeId === 0 || s.auditTypeId === typeId);
+                var matchDept = (deptId === 0 || s.deptId === deptId);
+                var matchDate = (!dateVal || (s.auditMonth && s.auditMonth.startsWith(dateVal)));
+                return matchType && matchDept && matchDate;
+            });
+
+            renderConductSessionDropdown(filtered);
+        }
+
+        async function loadScheduleSessions() {
+            var typeId = document.getElementById('schedAuditType').value;
+            var deptId = document.getElementById('schedDept').value;
+            var year = document.getElementById('schedYear').value;
+
+            try {
+                var res = await fetch(`/api/audit/sessions?auditTypeId=${typeId}&deptId=${deptId}&year=${year}`).then(r => r.json());
+                if (!res.success) return;
+
+                var events = res.data.map(s => {
+                    var statusName = s.statusName || 'Draft';
+                    var color = '#f59e0b';
+                    if (statusName === 'Approved') color = '#10b981';
+                    else if (statusName === 'Checked') color = '#06b6d4';
+                    else if (statusName === 'Submitted') color = '#2563eb';
+
+                    return {
+                        id: s.id,
+                        title: `[${s.deptName}] ${s.auditTypeName} (${statusName})`,
+                        start: s.auditMonth ? s.auditMonth.split('T')[0] : new Date().toISOString().split('T')[0],
+                        backgroundColor: color,
+                        borderColor: color,
+                        textColor: '#ffffff'
+                    };
+                });
+
+                if (calendarInstance) {
+                    calendarInstance.removeAllEvents();
+                    calendarInstance.addEventSource(events);
+                }
+
+                // Update Quick KPI Strip Bar Values
+                var totalAudits = res.data.length;
+                var openCapas = res.data.filter(s => s.statusName === 'Open' || s.statusName === 'Draft').length;
+                var pendingAudits = res.data.filter(s => s.statusName === 'Submitted' || s.statusName === 'Checked').length;
+                var validScores = res.data.filter(s => s.scorePercent != null);
+                var avgScore = validScores.length > 0 ? Math.round(validScores.reduce((sum, item) => sum + item.scorePercent, 0) / validScores.length) : 100;
+
+                if (document.getElementById('kpiStripTotal')) document.getElementById('kpiStripTotal').textContent = `(${totalAudits})`;
+                if (document.getElementById('kpiStripOpen')) document.getElementById('kpiStripOpen').textContent = `(${openCapas})`;
+                if (document.getElementById('kpiStripScore')) document.getElementById('kpiStripScore').textContent = `(${avgScore}%)`;
+                if (document.getElementById('kpiStripPending')) document.getElementById('kpiStripPending').textContent = `(${pendingAudits})`;
+
+                // Populate Session Select dropdown for Conduct tab
+                var sessionOpts = res.data.map(s => `<option value="${s.id}">Round #${s.id} - ${s.deptName} (${s.auditTypeName}) [${s.statusName}]</option>`).join('');
+                document.getElementById('conductSessionSelect').innerHTML = '<option value="0">-- Choose Active Audit Session --</option>' + sessionOpts;
+
+                // Populate Table
+                var rows = res.data.map(s => `
+                    <tr>
+                        <td><strong>#${s.id}</strong></td>
+                        <td>${s.auditTypeName}</td>
+                        <td><span class="status-badge status-submitted">${s.deptName}</span></td>
+                        <td>${s.auditMonth ? s.auditMonth.split('T')[0] : 'N/A'}</td>
+                        <td>${s.shift}</td>
+                        <td>${s.auditorName}</td>
+                        <td><strong>${s.scorePercent ?? 0}%</strong> (${s.grade ?? 'N/A'})</td>
+                        <td><span class="status-badge status-${(s.statusName || 'draft').toLowerCase()}">${s.statusName}</span></td>
+                        <td>
+                            <button type="button" class="score-btn s8" style="width:auto; padding: 0 8px;" onclick="openConductForSession(${s.id})">Conduct</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                document.getElementById('schedSessionTableBody').innerHTML = rows || '<tr><td colspan="9" style="text-align:center;">No scheduled audit sessions found.</td></tr>';
+            } catch (err) {
+                console.error("Error loading schedule sessions:", err);
+            }
+        }
+
+        function openCreateSessionModal() {
+            document.getElementById('modalAuditMonth').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modalCreateSession').classList.add('active');
+        }
+
+        function closeCreateSessionModal() {
+            document.getElementById('modalCreateSession').classList.remove('active');
+        }
+
+        async function handleCreateSessionSubmit(e) {
+            e.preventDefault();
+            var payload = {
+                auditTypeId: parseInt(document.getElementById('modalAuditTypeId').value),
+                deptId: parseInt(document.getElementById('modalDeptId').value),
+                auditMonth: document.getElementById('modalAuditMonth').value,
+                shift: document.getElementById('modalShift').value,
+                auditorId: parseInt(document.getElementById('modalAuditorId').value) || null,
+                note: document.getElementById('modalNote').value
+            };
+
+            var res = await fetch('/api/audit/sessions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json());
+
+            if (res.success) {
+                closeCreateSessionModal();
+                loadScheduleSessions();
+                loadConductActiveSessions();
+                alert("New audit round scheduled successfully!");
+            } else {
+                alert("Error: " + res.message);
+            }
+        }
+
+        function openConductForSession(sessionId) {
+            var conductTabBtn = document.querySelectorAll('.audit-tab-btn')[1];
+            switchTab('conduct', conductTabBtn);
+            loadConductActiveSessions().then(() => {
+                document.getElementById('conductSessionSelect').value = sessionId;
+                loadConductChecksheet();
+            });
+        }
+
+        function updateConductProgressBar(totalItems, completedItems, okCount, ngCount) {
+            var percent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+            document.getElementById('conductProgressText').textContent = `${completedItems} / ${totalItems} Completed (${percent}%)`;
+            document.getElementById('badgeOkCount').textContent = `${okCount} OK`;
+            document.getElementById('badgeNgCount').textContent = `${ngCount} NG`;
+            document.getElementById('conductProgressBar').style.width = `${percent}%`;
+        }
+
+        function calculateChecksheetProgress() {
+            var rows = document.querySelectorAll('#conductChecksheetBody tr[data-item-id]');
+            var totalItems = rows.length;
+            var completedItems = 0;
+            var okCount = 0;
+            var ngCount = 0;
+
+            rows.forEach(r => {
+                var selBtn = r.querySelector('.score-btn.selected');
+                if (selBtn) {
+                    completedItems++;
+                    var val = parseFloat(selBtn.textContent.trim());
+                    if (val >= 6) {
+                        okCount++;
+                    } else {
+                        ngCount++;
+                    }
+                }
+            });
+
+            updateConductProgressBar(totalItems, completedItems, okCount, ngCount);
+        }
+
+        async function loadConductChecksheet() {
+            var sessionId = document.getElementById('conductSessionSelect').value;
+            if (sessionId <= 0) {
+                document.getElementById('conductChecksheetBody').innerHTML = '<tr><td colspan="6" style="text-align:center;">Please select an active audit session to load the checksheet.</td></tr>';
+                updateConductProgressBar(0, 0, 0, 0);
+                
+                // Unlock filters if no active session is selected
+                document.getElementById('conductFilterType').disabled = false;
+                document.getElementById('conductFilterDept').disabled = false;
+                document.getElementById('conductFilterDate').disabled = false;
+                return;
+            }
+
+            var res = await fetch(`/api/audit/sessions/${sessionId}/checksheet`).then(r => r.json());
+            if (!res.success) return;
+
+            var info = res.session;
+            if (info) {
+                // Auto pre-fill the 3 fields matching the active session
+                var typeSelect = document.getElementById('conductFilterType');
+                var deptSelect = document.getElementById('conductFilterDept');
+                var dateInput = document.getElementById('conductFilterDate');
+
+                if (info.auditTypeId) {
+                    typeSelect.value = info.auditTypeId;
+                }
+                if (typeSelect.selectedIndex <= 0 && info.auditTypeName) {
+                    Array.from(typeSelect.options).forEach(opt => {
+                        if (opt.text.toLowerCase().includes(info.auditTypeName.toLowerCase())) {
+                            typeSelect.value = opt.value;
+                        }
+                    });
+                }
+
+                if (info.deptId) {
+                    deptSelect.value = info.deptId;
+                }
+                if (deptSelect.selectedIndex <= 0 && info.deptName) {
+                    Array.from(deptSelect.options).forEach(opt => {
+                        if (opt.text.toLowerCase().includes(info.deptName.toLowerCase())) {
+                            deptSelect.value = opt.value;
+                        }
+                    });
+                }
+
+                if (info.auditMonth) {
+                    dateInput.value = info.auditMonth.split('T')[0];
+                }
+
+                // Lock all 3 fields to prevent accidental edits / form corruption
+                typeSelect.disabled = true;
+                deptSelect.disabled = true;
+                dateInput.disabled = true;
+            }
+
+            document.getElementById('conductSessionInfo').innerHTML = `
+                Round #${info.id} | Dept: ${info.deptName} | Score: <strong>${info.scorePercent ?? 0}%</strong> (Grade ${info.grade ?? 'N/A'})
+            `;
+
+            var currentCat = "";
+            var rowsHtml = "";
+
+            res.items.forEach(item => {
+                if (item.category !== currentCat) {
+                    currentCat = item.category;
+                    rowsHtml += `<tr class="category-header-row"><td colspan="6">📁 CATEGORY: ${currentCat}</td></tr>`;
+                }
+
+                var scoreVal = item.score;
+                rowsHtml += `
+                    <tr data-item-id="${item.id}">
+                        <td class="mobile-hide-seq"><strong>#${item.seqNo || item.id}</strong></td>
+                        <td class="mobile-hide-cat"><span class="status-badge status-submitted">${item.category}</span></td>
+                        <td>
+                            <div style="font-size: 0.92rem; line-height: 1.4; color: var(--text-color, #0f172a);">
+                                <strong>#${item.seqNo || item.id}. ${item.auditItem}</strong>
+                            </div>
+                            ${item.auditItemTranslate ? `<div style="font-size:0.84rem; color:#64748b; margin-top:3px;">${item.auditItemTranslate}</div>` : ''}
+                        </td>
+                        <td>
+                            <div class="rubric-btn-group">
+                                ${[10, 8, 6, 4, 2, 0].map(s => `
+                                    <button type="button" class="score-btn s${s} ${scoreVal === s ? 'selected' : ''}" onclick="setScore(this, ${item.id}, ${s})">${s}</button>
+                                `).join('')}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="item-action-row">
+                                <input type="text" class="audit-input item-note" style="width: 100%;" value="${item.note || ''}" placeholder="Remarks / Evidence notes..." />
+                                <div id="evidencePreview_${item.id}" class="evidence-preview-wrap"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="item-tools-bar">
+                                <input type="file" id="cameraInput_${item.id}" accept="image/*" capture="environment" style="display:none;" onchange="uploadEvidencePhoto(event, ${item.id})" />
+                                <button type="button" class="btn-camera-custom" onclick="triggerCamera(${item.id})">
+                                    📷 <span>Photo</span>
+                                </button>
+                                <button type="button" class="score-btn s0" style="width:auto; padding: 0 10px; height: 34px;" onclick="createNCForResult(${sessionId}, ${item.id})">+ NC</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('conductChecksheetBody').innerHTML = rowsHtml || '<tr><td colspan="6" style="text-align:center;">No checksheet questions found for this audit session.</td></tr>';
+            calculateChecksheetProgress();
+        }
+
+        function triggerCamera(itemId) {
+            var input = document.getElementById('cameraInput_' + itemId);
+            if (input) input.click();
+        }
+
+        async function uploadEvidencePhoto(e, itemId) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                var res = await fetch('/api/audit/evidence/upload', {
+                    method: 'POST',
+                    body: formData
+                }).then(r => r.json());
+
+                if (res.success) {
+                    var container = document.getElementById('evidencePreview_' + itemId);
+                    if (container) {
+                        var imgThumb = document.createElement('div');
+                        imgThumb.className = 'evidence-thumb-box';
+                        imgThumb.setAttribute('data-url', res.url);
+                        imgThumb.innerHTML = `
+                            <a href="${res.url}" target="_blank">
+                                <img src="${res.url}" alt="Evidence" class="evidence-thumb-img" />
+                            </a>
+                            <span class="remove-thumb-btn" onclick="this.parentElement.remove()">✕</span>
+                        `;
+                        container.appendChild(imgThumb);
+                    }
+                } else {
+                    alert("Upload failed: " + res.message);
+                }
+            } catch (err) {
+                console.error("Error uploading evidence photo:", err);
+                alert("Photo upload error!");
+            }
+        }
+
+        function setScore(btn, itemId, score) {
+            var parent = btn.parentElement;
+            parent.querySelectorAll('.score-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            calculateChecksheetProgress();
+        }
+
+        function closeUnansweredModal() {
+            document.getElementById('modalUnansweredWarning').classList.remove('active');
+        }
+
+        function closeUnansweredModalAndScroll() {
+            closeUnansweredModal();
+            var itemRows = document.querySelectorAll('#conductChecksheetBody tr[data-item-id]');
+            for (var i = 0; i < itemRows.length; i++) {
+                if (!itemRows[i].querySelector('.score-btn.selected')) {
+                    itemRows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+                }
+            }
+        }
+
+        async function submitConductForm(actionType) {
+            var sessionId = parseInt(document.getElementById('conductSessionSelect').value);
+            if (sessionId <= 0) {
+                alert("Please select an active audit session first!");
+                return;
+            }
+
+            var itemRows = document.querySelectorAll('#conductChecksheetBody tr[data-item-id]');
+            var items = [];
+            var unansweredItems = [];
+
+            itemRows.forEach(row => {
+                var itemId = parseInt(row.getAttribute('data-item-id'));
+                var selectedBtn = row.querySelector('.score-btn.selected');
+                var noteInput = row.querySelector('.item-note');
+
+                if (selectedBtn) {
+                    var score = parseFloat(selectedBtn.textContent.trim());
+                    items.push({
+                        auditItemId: itemId,
+                        score: score,
+                        judge: score >= 6 ? 'PASS' : 'FAIL',
+                        note: noteInput ? noteInput.value : ''
+                    });
+                    row.style.outline = "none";
+                } else {
+                    var seqText = row.querySelector('td:first-child')?.textContent?.trim() || ('#' + itemId);
+                    unansweredItems.push(seqText);
+                    row.style.outline = "2px solid #dc2626";
+                    row.style.borderRadius = "8px";
+                }
+            });
+
+            // Bilingual Modal Rule: Block submit if any items are left blank
+            if (actionType !== 'draft' && unansweredItems.length > 0) {
+                document.getElementById('unansweredItemsText').textContent = unansweredItems.join(', ');
+                document.getElementById('modalUnansweredWarning').classList.add('active');
+                return;
+            }
+
+            var res = await fetch(`/api/audit/sessions/${sessionId}/conduct`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    action: actionType,
+                    items: items
+                })
+            }).then(r => r.json());
+
+            if (res.success) {
+                alert(`Audit evaluation saved! Total Score: ${res.scorePercent}% (Grade ${res.grade})`);
+                loadConductChecksheet();
+            } else {
+                alert("Error: " + res.message);
+            }
+        }
+
+        async function loadIssueList() {
+            var statusId = document.getElementById('issueStatusFilter').value;
+            var deptId = document.getElementById('issueDeptFilter').value;
+
+            var res = await fetch(`/api/audit/actions?statusId=${statusId}&deptId=${deptId}`).then(r => r.json());
+            if (!res.success) return;
+
+            var rows = res.data.map(a => `
+                <tr>
+                    <td><strong>#${a.id}</strong></td>
+                    <td><span class="status-badge status-submitted">${a.deptName || 'N/A'}</span></td>
+                    <td>${a.category || 'General'}</td>
+                    <td>${a.description || ''}</td>
+                    <td>${a.picName || 'Unassigned'}</td>
+                    <td>${a.dueDate ? a.dueDate.split('T')[0] : 'N/A'}</td>
+                    <td><span class="status-badge status-${(a.statusName || 'open').toLowerCase()}">${a.statusName || 'Open'}</span></td>
+                    <td>📸 ${a.evidences ? a.evidences.length : 0} photos</td>
+                    <td>
+                        <button type="button" class="score-btn s8" style="width:auto; padding:0 8px;" onclick="closeIssueAction(${a.id})">Close Issue</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('issueTableBody').innerHTML = rows || '<tr><td colspan="9" style="text-align:center;">No audit CAPA issues found.</td></tr>';
+        }
+
+        async function closeIssueAction(actionId) {
+            if (!confirm("Are you sure you want to mark this CAPA issue as Closed?")) return;
+
+            var res = await fetch(`/api/audit/actions/${actionId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actionId: actionId, statusId: 9 }) // 9 = Closed
+            }).then(r => r.json());
+
+            if (res.success) {
+                loadIssueList();
+            }
+        }
+
+        async function createNCForResult(sessionId, itemId) {
+            var desc = prompt("Enter Description of Non-Conformance / Issue:");
+            if (!desc) return;
+
+            var res = await fetch('/api/audit/actions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    auditResultId: itemId,
+                    description: desc
+                })
+            }).then(r => r.json());
+
+            if (res.success) {
+                alert("NC Issue created successfully!");
+            }
+        }
+
+        async function loadSummaryMetrics() {
+            var res = await fetch('/api/audit/summary').then(r => r.json());
+            if (!res.success) return;
+
+            var d = res.data;
+            document.getElementById('kpiTotalRounds').textContent = d.totalSessions;
+            document.getElementById('kpiAvgScore').textContent = d.averageScorePercent + '%';
+            document.getElementById('kpiTotalIssues').textContent = d.totalIssues;
+            document.getElementById('kpiOpenIssues').textContent = d.openIssues;
+
+            // Render Charts
+            var deptNames = d.departmentPerformance.map(p => p.deptName);
+            var deptScores = d.departmentPerformance.map(p => p.avgScorePercent);
+
+            if (deptScoreChart) deptScoreChart.destroy();
+            var ctx1 = document.getElementById('chartDeptScore').getContext('2d');
+            deptScoreChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: deptNames.length ? deptNames : ['Warehouse'],
+                    datasets: [{
+                        label: 'Average Score %',
+                        data: deptScores.length ? deptScores : [100],
+                        backgroundColor: '#2563eb'
+                    }]
+                }
+            });
+
+            if (issueStatusChart) issueStatusChart.destroy();
+            var ctx2 = document.getElementById('chartIssueStatus').getContext('2d');
+            issueStatusChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Open', 'Rectified', 'Closed'],
+                    datasets: [{
+                        data: [d.openIssues, d.rectifiedIssues, d.closedIssues],
+                        backgroundColor: ['#dc2626', '#f59e0b', '#10b981']
+                    }]
+                }
+            });
+        }
+    </script>
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MMES.Models;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +18,10 @@ public partial class MMesDbContext : DbContext
 
     public virtual DbSet<TbAoiPid> TbAoiPids { get; set; }
 
+    public virtual DbSet<TbPickupMiss> TbPickupMisses { get; set; }
+
+    public virtual DbSet<TbSmtLineTarget> TbSmtLineTargets { get; set; }
+
     public virtual DbSet<TbAuditActionHi> TbAuditActionHis { get; set; }
 
     public virtual DbSet<TbAuditChecksheet> TbAuditChecksheets { get; set; }
@@ -27,6 +31,16 @@ public partial class MMesDbContext : DbContext
     public virtual DbSet<TbAuditResult> TbAuditResults { get; set; }
 
     public virtual DbSet<TbAuditStatus> TbAuditStatuses { get; set; }
+
+    public virtual DbSet<ClientUpdateRelease> ClientUpdateReleases { get; set; }
+
+    public virtual DbSet<StoredFile> StoredFiles { get; set; }
+
+    public virtual DbSet<TbAuditSession> TbAuditSessions { get; set; }
+
+    public virtual DbSet<TbAuditAction> TbAuditActions { get; set; }
+
+    public virtual DbSet<TbAuditActionEvidence> TbAuditActionEvidences { get; set; }
 
     public virtual DbSet<TbAuditType> TbAuditTypes { get; set; }
 

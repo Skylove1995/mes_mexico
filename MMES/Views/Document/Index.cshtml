@@ -1,0 +1,434 @@
+@{
+    Layout = null;
+    var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+    var isAdmin = User.IsInRole("Admin") || string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Management Dashboard - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        window.isDmsAdmin = @(isAdmin ? "true" : "false");
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dms-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/bootstrap-icons/bootstrap-icons.min.css" asp-append-version="true">
+    <script src="~/js/tailwind-runtime.js" asp-append-version="true"></script>
+</head>
+
+<body class="dashboard-page font-sans antialiased min-h-screen">
+    <partial name="_DashboardHeader" />
+
+    <div class="dms-dashboard-wrapper">
+        <!-- 1. LEFT SIDEBAR: CATEGORIES NAV (IMAGE 1 & 2) -->
+        <aside class="dms-sidebar-left">
+            <div class="dms-category-title">Categories</div>
+            <ul class="dms-category-list" id="dmsCategoryList">
+                <li class="dms-category-item active">
+                    <span class="cat-label"><i class="bi bi-grid-fill"></i><span>All Categories</span></span>
+                    <span class="cat-count">(...)</span>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- 2. CENTRAL MAIN CONTENT AREA -->
+        <main class="dms-main-content">
+            <!-- Top Action Header -->
+            <div class="dms-header-bar">
+                <h1 class="dms-page-title">DOCUMENT MANAGEMENT DASHBOARD</h1>
+
+                <div class="dms-header-actions">
+                    <button onclick="openUploadModal()" class="dms-btn-primary">
+                        <i class="bi bi-cloud-arrow-up-fill"></i>
+                        <span>Upload New Document</span>
+                    </button>
+
+                    <button onclick="openUpdateVersionModal()" class="dms-btn-success">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Update Version</span>
+                    </button>
+
+                    @if (isAdmin)
+                    {
+                        <button onclick="openMasterDataModal()" class="dms-btn-secondary">
+                            <i class="bi bi-gear-fill"></i>
+                            <span>Master Data Settings</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="dms-search-container">
+                <i class="bi bi-search dms-search-icon"></i>
+                <input type="text" id="dmsSearchInput" class="dms-search-input" placeholder="Search documents by ID, Title, or Owner..." />
+            </div>
+
+            <!-- Department Filter Pills -->
+            <div class="dms-dept-tabs" id="dmsDeptPills">
+                <div class="dms-dept-pill active">All Departments</div>
+            </div>
+
+            <!-- Document List Table -->
+            <div class="dms-table-card">
+                <div class="overflow-x-auto">
+                    <table class="dms-table">
+                        <thead>
+                            <tr>
+                                <th>Document ID <i class="bi bi-arrow-down-up text-[10px]"></i></th>
+                                <th>Document Title <i class="bi bi-arrow-down-up text-[10px]"></i></th>
+                                <th>Type <i class="bi bi-arrow-down-up text-[10px]"></i></th>
+                                <th>Version</th>
+                                <th>Status <i class="bi bi-arrow-down-up text-[10px]"></i></th>
+                                <th>Department <i class="bi bi-arrow-down-up text-[10px]"></i></th>
+                                <th>Updated Date <i class="bi bi-arrow-down-up text-[10px]"></i></th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dmsTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center p-6 text-slate-400">Loading factory document management dashboard...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="dmsPagination"></div>
+        </main>
+
+        <!-- 3. RIGHT SIDEBAR: ADVANCED FILTERS (IMAGE 2) -->
+        <aside class="dms-sidebar-right">
+            <h3 class="dms-filter-header">Advanced Filters</h3>
+
+            <!-- Filter by Process -->
+            <div class="dms-filter-group">
+                <div class="dms-filter-group-title">Filter by Process</div>
+                <div class="dms-checkbox-list" id="filterProcesses">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Filter by Machine -->
+            <div class="dms-filter-group">
+                <div class="dms-filter-group-title">Filter by Machine</div>
+                <div class="dms-checkbox-list" id="filterMachines">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Filter by Model -->
+            <div class="dms-filter-group">
+                <div class="dms-filter-group-title">Filter by Model</div>
+                <div class="dms-checkbox-list" id="filterModels">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Filter by Status -->
+            <div class="dms-filter-group">
+                <div class="dms-filter-group-title">Filter by Status</div>
+                <div class="dms-checkbox-list" id="filterStatuses">
+                    <label class="dms-checkbox-label">
+                        <input type="checkbox" value="Draft" onchange="applyAdvancedFilters()" />
+                        <span>Draft</span>
+                    </label>
+                    <label class="dms-checkbox-label">
+                        <input type="checkbox" value="Pending" onchange="applyAdvancedFilters()" />
+                        <span>Pending</span>
+                    </label>
+                    <label class="dms-checkbox-label">
+                        <input type="checkbox" value="Approved" onchange="applyAdvancedFilters()" />
+                        <span>Approved</span>
+                    </label>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- MODAL 1: UPLOAD NEW FACTORY DOCUMENT -->
+    <div id="uploadDocModal" class="dms-modal-backdrop hidden">
+        <div class="dms-modal-card">
+            <div class="dms-modal-header">
+                <h3 class="dms-modal-title"><i class="bi bi-cloud-upload-fill text-blue-500 mr-2"></i>Upload New Factory Document</h3>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <form id="uploadDocForm" onsubmit="submitUploadForm(event)">
+                <div class="dms-modal-body">
+                    <!-- 1. Selection Inputs for Auto Document ID -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="dms-form-group">
+                            <label class="dms-form-label">Document Type *</label>
+                            <select name="TypeId" required class="dms-form-control" id="uploadTypeId" onchange="generateAutoDocNumber()">
+                                <option value="">-- Choose Category Type --</option>
+                            </select>
+                        </div>
+
+                        <div class="dms-form-group">
+                            <label class="dms-form-label">Department Owner *</label>
+                            <select name="DeptId" required class="dms-form-control" id="uploadDeptId" onchange="generateAutoDocNumber()">
+                                <option value="">-- Choose Department --</option>
+                            </select>
+                        </div>
+
+                        <div class="dms-form-group">
+                            <label class="dms-form-label">Document Sequence / Number *</label>
+                            <input type="text" id="uploadDocSeq" value="021" class="dms-form-control font-mono" placeholder="e.g. 021 or 001" oninput="generateAutoDocNumber()" />
+                        </div>
+
+                        <div class="dms-form-group relative">
+                            <label class="dms-form-label">Initial Version *</label>
+                            <div class="flex items-center gap-2">
+                                <input type="text" name="InitialVersion" id="uploadVersionInput" value="v1.0" class="dms-form-control font-mono font-bold w-28 text-center" />
+                                
+                                <div class="relative">
+                                    <button type="button" onclick="toggleVersionDropdown(event)" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-200 text-xs font-bold rounded flex items-center gap-1.5 transition shadow-sm">
+                                        <i class="bi bi-layers-fill text-blue-500"></i>
+                                        <span>Version Preset</span>
+                                        <i class="bi bi-chevron-down text-[10px]"></i>
+                                    </button>
+
+                                    <!-- Version Selection Pop-up Dropdown -->
+                                    <div id="versionDropdownMenu" class="hidden absolute right-0 mt-1 w-52 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-xl z-50 p-2 text-xs">
+                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1 mb-1 border-b border-slate-200 dark:border-slate-700">Select Preset Version</div>
+                                        <button type="button" onclick="setInitialVersion('v1.0')" class="w-full text-left px-2.5 py-1.5 hover:bg-blue-50 dark:hover:bg-slate-700/80 rounded font-mono font-bold flex items-center justify-between text-slate-700 dark:text-slate-200 mb-0.5">
+                                            <span class="text-blue-600 dark:text-blue-400">v1.0</span>
+                                            <span class="text-[10px] font-normal text-slate-400">Initial Release</span>
+                                        </button>
+                                        <button type="button" onclick="setInitialVersion('v1.1')" class="w-full text-left px-2.5 py-1.5 hover:bg-blue-50 dark:hover:bg-slate-700/80 rounded font-mono font-bold flex items-center justify-between text-slate-700 dark:text-slate-200 mb-0.5">
+                                            <span class="text-amber-600 dark:text-amber-400">v1.1</span>
+                                            <span class="text-[10px] font-normal text-slate-400">Minor Draft</span>
+                                        </button>
+                                        <button type="button" onclick="setInitialVersion('v2.0')" class="w-full text-left px-2.5 py-1.5 hover:bg-blue-50 dark:hover:bg-slate-700/80 rounded font-mono font-bold flex items-center justify-between text-slate-700 dark:text-slate-200 mb-0.5">
+                                            <span class="text-emerald-600 dark:text-emerald-400">v2.0</span>
+                                            <span class="text-[10px] font-normal text-slate-400">Major Release</span>
+                                        </button>
+                                        <button type="button" onclick="setInitialVersion('v3.0')" class="w-full text-left px-2.5 py-1.5 hover:bg-blue-50 dark:hover:bg-slate-700/80 rounded font-mono font-bold flex items-center justify-between text-slate-700 dark:text-slate-200">
+                                            <span class="text-purple-600 dark:text-purple-400">v3.0</span>
+                                            <span class="text-[10px] font-normal text-slate-400">Major Revision</span>
+                                        </button>
+                                        <div class="border-t border-slate-200 dark:border-slate-700 my-1.5"></div>
+                                        <div class="flex items-center justify-between gap-1">
+                                            <button type="button" onclick="incrementInitialVersion(0.1)" class="flex-1 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-center rounded font-bold text-slate-700 dark:text-slate-200">+0.1</button>
+                                            <button type="button" onclick="incrementInitialVersion(1.0)" class="flex-1 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-center rounded font-bold text-slate-700 dark:text-slate-200">+1.0</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Auto-Generated Document ID & Title -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="dms-form-group">
+                            <label class="dms-form-label flex items-center justify-between">
+                                <span>Auto-Generated Document ID *</span>
+                                <button type="button" onclick="generateAutoDocNumber()" class="text-xs text-blue-500 hover:underline flex items-center gap-1 font-normal">
+                                    <i class="bi bi-arrow-clockwise"></i> Re-generate
+                                </button>
+                            </label>
+                            <input type="text" name="DocNumber" id="uploadDocNumber" required class="dms-form-control font-mono font-bold text-blue-600 dark:text-blue-400" placeholder="e.g. HSM-IVI-LQC-WI-021" oninput="checkDocNumberAvailability(this.value)" />
+                            <div id="docNumberCheckStatus" class="text-xs mt-1 font-medium hidden"></div>
+                        </div>
+
+                        <div class="dms-form-group">
+                            <label class="dms-form-label">Document Title *</label>
+                            <input type="text" name="Title" id="uploadDocTitle" required class="dms-form-control" placeholder="e.g. HSM-IVI-LQC-WI-021_MOI.AOI PROGRAM INSTRUCTION" />
+                        </div>
+                    </div>
+
+                    <!-- Applicable Processes (Multi-select) -->
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">Applicable Process(es)</label>
+                        <div class="dms-checkbox-grid" id="uploadProcessList">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+
+                    <!-- Applicable Machines (Multi-select) -->
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">Applicable Machine(s)</label>
+                        <div class="dms-checkbox-grid" id="uploadMachineList">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+
+                    <!-- Applicable Models (Multi-select) -->
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">Applicable Model(s)</label>
+                        <div class="dms-checkbox-grid" id="uploadModelList">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">Attach File (.pdf, .docx, .xlsx, .pptx) *</label>
+                        <input type="file" name="File" required class="dms-form-control" />
+                    </div>
+
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">Description / Purpose & Scope</label>
+                        <textarea name="Description" rows="2" class="dms-form-control" placeholder="Enter document purpose, scope, or operation guidelines..."></textarea>
+                    </div>
+                </div>
+
+                <div class="dms-modal-footer">
+                    <button type="button" onclick="closeUploadModal()" class="px-4 py-2 bg-slate-700 text-white rounded font-bold text-xs">Cancel</button>
+                    <button type="submit" id="uploadSubmitBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs shadow disabled:opacity-50 disabled:cursor-not-allowed">Upload & Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: UPDATE VERSION -->
+    <div id="updateVerModal" class="dms-modal-backdrop hidden">
+        <div class="dms-modal-card max-w-md">
+            <div class="dms-modal-header">
+                <h3 class="dms-modal-title"><i class="bi bi-arrow-repeat text-emerald-500 mr-2"></i>Update Document Version</h3>
+                <button onclick="closeUpdateVersionModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <form id="updateVerForm" onsubmit="submitUpdateVersionForm(event)">
+                <input type="hidden" name="DocId" id="updateDocId" />
+
+                <div class="dms-modal-body">
+                    <div class="p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700/80 rounded text-xs mb-2">
+                        <div><strong>Document ID:</strong> <span id="updateDocNum" class="font-mono text-cyan-600 dark:text-cyan-400">-</span></div>
+                        <div><strong>Current Version:</strong> <span id="updateCurVer" class="font-mono text-amber-600 dark:text-amber-400">-</span></div>
+                    </div>
+
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">New Version Number *</label>
+                        <input type="text" name="NewVersionNumber" id="newVerInput" required class="dms-form-control font-mono" placeholder="e.g. v1.1 or v2.0" />
+                    </div>
+
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">Attach New Version File *</label>
+                        <input type="file" name="File" required class="dms-form-control" />
+                    </div>
+
+                    <div class="dms-form-group">
+                        <label class="dms-form-label">Revision Summary / Reason for Change</label>
+                        <textarea name="ChangeSummary" rows="2" class="dms-form-control" placeholder="Summarize revision details or ECN release info..."></textarea>
+                    </div>
+                </div>
+
+                <div class="dms-modal-footer">
+                    <button type="button" onclick="closeUpdateVersionModal()" class="px-4 py-2 bg-slate-700 text-white rounded font-bold text-xs">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-xs shadow">Update Version</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: MASTER DATA MANAGEMENT (ADMIN ONLY) -->
+    <div id="masterDataModal" class="dms-modal-backdrop hidden">
+        <div class="dms-modal-card max-w-3xl">
+            <div class="dms-modal-header">
+                <h3 class="dms-modal-title"><i class="bi bi-gear-fill text-purple-500 mr-2"></i>Master Data Management (Admin)</h3>
+                <button onclick="closeMasterDataModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <div class="dms-modal-body">
+                <!-- Master Data Tabs -->
+                <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2 overflow-x-auto text-xs font-bold">
+                    <button type="button" onclick="switchMasterTab('processes')" id="masterTab-processes" class="master-tab-btn px-3 py-1.5 rounded bg-blue-600 text-white">Processes</button>
+                    <button type="button" onclick="switchMasterTab('machines')" id="masterTab-machines" class="master-tab-btn px-3 py-1.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">Machines</button>
+                    <button type="button" onclick="switchMasterTab('models')" id="masterTab-models" class="master-tab-btn px-3 py-1.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">Models</button>
+                    <button type="button" onclick="switchMasterTab('departments')" id="masterTab-departments" class="master-tab-btn px-3 py-1.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">Departments</button>
+                    <button type="button" onclick="switchMasterTab('types')" id="masterTab-types" class="master-tab-btn px-3 py-1.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">Doc Types</button>
+                </div>
+
+                <!-- Tab Content Container -->
+                <div id="masterTabContent" class="mt-3">
+                    <!-- Loaded dynamically in JS -->
+                </div>
+            </div>
+
+            <div class="dms-modal-footer">
+                <button type="button" onclick="closeMasterDataModal()" class="px-4 py-2 bg-slate-700 text-white rounded font-bold text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: VIEW DOCUMENT DETAILS -->
+    <div id="docDetailsModal" class="dms-modal-backdrop hidden">
+        <div class="dms-modal-card max-w-2xl">
+            <div class="dms-modal-header">
+                <h3 class="dms-modal-title"><i class="bi bi-eye-fill text-blue-500 mr-2"></i>Document Details</h3>
+                <button onclick="closeDocDetailsModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <div class="dms-modal-body text-xs leading-relaxed" id="docDetailsBody">
+                <div class="text-center py-6 text-slate-400"><i class="bi bi-arrow-repeat animate-spin text-lg"></i> Loading details...</div>
+            </div>
+
+            <div class="dms-modal-footer">
+                <button type="button" onclick="closeDocDetailsModal()" class="px-4 py-2 bg-slate-700 text-white rounded font-bold text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: REVISION HISTORY -->
+    <div id="revisionHistoryModal" class="dms-modal-backdrop hidden">
+        <div class="dms-modal-card max-w-3xl">
+            <div class="dms-modal-header">
+                <h3 class="dms-modal-title"><i class="bi bi-clock-history text-cyan-500 mr-2"></i>Document Revision History</h3>
+                <button onclick="closeRevisionHistoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <div class="dms-modal-body text-xs" id="revisionHistoryBody">
+                <div class="text-center py-6 text-slate-400"><i class="bi bi-arrow-repeat animate-spin text-lg"></i> Loading version history...</div>
+            </div>
+
+            <div class="dms-modal-footer">
+                <button type="button" onclick="closeRevisionHistoryModal()" class="px-4 py-2 bg-slate-700 text-white rounded font-bold text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: DOCUMENT PREVIEW MODAL -->
+    <div id="docPreviewModal" class="dms-modal-backdrop hidden">
+        <div class="dms-modal-card max-w-[95vw] w-[95vw] h-[92vh] flex flex-col p-0 overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl">
+            <div class="dms-modal-header bg-slate-900/90 backdrop-blur px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <span class="p-2 bg-blue-500/10 text-blue-400 rounded-lg text-lg"><i class="bi bi-file-earmark-pdf-fill"></i></span>
+                    <div>
+                        <h3 class="dms-modal-title text-slate-100 font-bold text-sm truncate" id="previewModalDocTitle">Document Title</h3>
+                        <div class="text-xs font-mono text-blue-400" id="previewModalDocNumber">Doc Number</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <a id="previewDownloadBtn" href="#" target="_blank" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md shadow inline-flex items-center gap-1.5 transition">
+                        <i class="bi bi-download"></i>
+                        <span>Download PDF</span>
+                    </a>
+                    <button onclick="closeDocPreviewModal()" class="text-slate-400 hover:text-white text-2xl font-bold px-2">&times;</button>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-slate-950 p-2 relative overflow-hidden flex items-center justify-center">
+                <div id="previewLoadingSpinner" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 z-10 text-slate-400 gap-2">
+                    <i class="bi bi-arrow-repeat animate-spin text-3xl text-blue-500"></i>
+                    <span class="text-xs font-medium">Preparing document preview via LibreOffice engine...</span>
+                </div>
+                <iframe id="docPreviewFrame" class="w-full h-full border-0 rounded-md bg-slate-900 shadow-inner" src="about:blank" onload="onPreviewFrameLoaded()"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/js/dms-dashboard.js" asp-append-version="true"></script>
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>

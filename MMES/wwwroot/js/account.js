@@ -1,30 +1,26 @@
 (function () {
-  var tabLogin = document.getElementById('tab-login');
-  var tabRegister = document.getElementById('tab-register');
+  var modeToggle = document.getElementById('mode-toggle');
   var formLogin = document.getElementById('form-login');
   var formRegister = document.getElementById('form-register');
-  var title = document.getElementById('heading-title');
-  var sub = document.getElementById('heading-sub');
 
   function activate(which) {
     var isLogin = which === 'login';
-    tabLogin.setAttribute('aria-selected', String(isLogin));
-    tabRegister.setAttribute('aria-selected', String(!isLogin));
-    formLogin.hidden = !isLogin;
-    formRegister.hidden = isLogin;
-    title.textContent = isLogin ? 'Sign in to your account' : 'Create a new account';
-    sub.textContent = isLogin
-      ? 'Enter your employee ID and password to access MMES.'
-      : 'Register for MMES using your employee ID and department.';
+    formLogin.classList.toggle('is-active', isLogin);
+    formRegister.classList.toggle('is-active', !isLogin);
+    modeToggle.innerHTML = isLogin
+      ? "Don't have an account? <strong>Register</strong>"
+      : 'Already have an account? <strong>Sign In</strong>';
 
     if (!isLogin) {
       loadDepartments();
     }
   }
 
-  if (tabLogin && tabRegister) {
-    tabLogin.addEventListener('click', function () { activate('login'); });
-    tabRegister.addEventListener('click', function () { activate('register'); });
+  if (modeToggle && formLogin && formRegister) {
+    modeToggle.addEventListener('click', function () {
+      var isCurrentlyLogin = formLogin.classList.contains('is-active');
+      activate(isCurrentlyLogin ? 'register' : 'login');
+    });
   }
 
   document.querySelectorAll('.eye').forEach(function (btn) {
@@ -70,7 +66,7 @@
   }
 
   // Neu form dang mo san o tab register (vi du sau khi submit loi), nap dept ngay.
-  if (formRegister && !formRegister.hidden) {
+  if (formRegister && formRegister.classList.contains('is-active')) {
     loadDepartments();
   }
 })();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace MMES.Models;
@@ -10,6 +10,8 @@ public partial class TbDept
     public string? Dept { get; set; }
 
     public string? Authority { get; set; }
+
+    public int? IsActive { get; set; }
 
     public virtual ICollection<TbAuditChecksheet> TbAuditChecksheets { get; set; } = new List<TbAuditChecksheet>();
 

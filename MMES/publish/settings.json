@@ -1,0 +1,17 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": {
+      "Provider": "MySql.Data.MySqlClient",
+      "Server": "10.8.11.184",
+      "Database": "mex_mes",
+      "User": "root",
+      "Password": "ivihaengsung@1",
+      "SslMode": "Disabled",
+      "AllowPublicKeyRetrieval": true,
+      "ConnectionTimeout": 60,
+      "DefaultCommandTimeout": 300,
+      "AllowLoadLocalInfile": true,
+      "RawConnectionString": "Server=10.8.11.184;Database=mex_mes;User=root;Password=ivihaengsung@1;SslMode=Disabled;AllowPublicKeyRetrieval=True;ConnectionTimeout=60;DefaultCommandTimeout=300;AllowLoadLocalInfile=true"
+    }
+  }
+}

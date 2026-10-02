@@ -177,6 +177,24 @@ rounds are recorded the same way through `tb_audit_session` → `tb_audit_result
 stored in `tb_dept.Dept` in the target database before executing — it wasn't queryable
 from this session.
 
+The script guards every `ALTER`/`CREATE`/seed step with an `information_schema` check
+(rather than MySQL 8.0.29's `IF NOT EXISTS`, which isn't available on every server) so
+it's safe to re-run end to end after a partial failure. `tb_audit_checksheet` also gets
+a `UNIQUE KEY (AUDIT_TYPE_ID, FOR_DEPT, SEQ_NO)` so the 29-item seed uses
+`ON DUPLICATE KEY UPDATE` instead of inserting duplicates on a second run — it only
+refreshes `CATEGORY`/`AUDIT_ITEM`/`MAX_SCORE`/`ACTIVE`, never touching
+`AUDIT_ITEM_TRANSLATE`/`TIME_LIMIT` so a re-run can't wipe out translations the
+business team has already filled in.
+
+**Discovered while applying the script:** `tb_audit_result` in the target database
+already had leftover test/scaffold rows with `SCORE` values outside the new
+`{0,2,4,6,8,10}` rubric, which the `CHECK` constraint in step 5 rejects (MySQL error
+3819). The script now includes a step 0 that truncates `tb_audit_result` and its child
+tables (`tb_audit_evidence_his`, `tb_audit_action_his`) first — confirmed disposable
+since no app code reads this data. If a target environment ever has real audit history
+in these tables, that step must be replaced with a `SCORE` migration instead of a
+truncate.
+
 ## Out of scope (not done in this pass)
 
 - EF Core model classes / `MMesDbContext` config updates for the new/changed tables —

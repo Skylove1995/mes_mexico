@@ -97,10 +97,19 @@ public class AccountController : Controller
 
         if (ModelState.IsValid)
         {
-            var exists = await _context.TbUsers.AnyAsync(u => u.UserName == register.EmployeeId);
-            if (exists)
+            var existsUser = await _context.TbUsers.AnyAsync(u => u.UserName == register.EmployeeId);
+            if (existsUser)
             {
-                ModelState.AddModelError(nameof(register.EmployeeId), "This employee ID is already registered.");
+                ModelState.AddModelError(nameof(register.EmployeeId), "This employee ID (username) is already registered.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(register.Email))
+            {
+                var existsEmail = await _context.TbUsers.AnyAsync(u => u.Email == register.Email.Trim());
+                if (existsEmail)
+                {
+                    ModelState.AddModelError(nameof(register.Email), "This email address is already in use.");
+                }
             }
         }
 
@@ -113,15 +122,36 @@ public class AccountController : Controller
         {
             UserName = register.EmployeeId,
             FullName = register.FullName,
-            Email = register.Email,
+            Email = register.Email?.Trim(),
             RoleId = dept!.Id,
             PasswordHash = PasswordHasher.Hash(register.Password),
             Active = "Y",
             CreateAt = DateTime.Now,
         };
 
-        _context.TbUsers.Add(user);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.TbUsers.Add(user);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            if (msg.Contains("EMAIL_UNIQUE", StringComparison.OrdinalIgnoreCase) || msg.Contains("email", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(register.Email), "This email address is already in use.");
+            }
+            else if (msg.Contains("PRIMARY", StringComparison.OrdinalIgnoreCase) || msg.Contains("USERNAME", StringComparison.OrdinalIgnoreCase) || msg.Contains("user_name", StringComparison.OrdinalIgnoreCase) || msg.Contains("Duplicate entry", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(register.EmployeeId), "This employee ID (username) is already registered.");
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Failed to create account. Please check your information.");
+            }
+
+            return View("Login", new AccountPageViewModel { Register = register });
+        }
 
         TempData["RegisterSuccess"] = "Account created. You can sign in now.";
         return RedirectToAction(nameof(Login), new { tab = "login" });

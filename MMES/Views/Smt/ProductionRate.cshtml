@@ -30,45 +30,25 @@
                 <h1>SMT Pass Rate Dashboard</h1>
             </div>
 
-            <!-- 🏆 3 KPI Overview Labels Embedded directly in Top Banner -->
-            <div class="pr-kpi-grid pr-header-kpis">
-                <div class="glass pr-kpi-card pr-kpi-day">
-                    <div class="pr-kpi-header">
-                        <span class="pr-kpi-badge">SHIFT 1</span>
-                        <span class="pr-kpi-icon">☀️</span>
-                    </div>
-                    <span class="pr-kpi-label">DAY SHIFT PASS RATE</span>
-                    <div class="pr-kpi-metrics">
-                        <span class="pr-kpi-value" id="pr-kpi-day-value">&ndash;</span>
-                        <span class="pr-kpi-rate" id="pr-kpi-day-rate">&ndash;%</span>
-                    </div>
-                    <span class="pr-kpi-sub" id="pr-kpi-day-sub">&ndash;</span>
+            <!-- 🏆 Line-by-Line KPI Overview Summary Table -->
+            <div class="pr-line-kpi-wrap glass">
+                <div class="pr-line-kpi-header">
+                    <span class="pr-line-kpi-title">📊 LINE PERFORMANCE OVERVIEW</span>
                 </div>
-
-                <div class="glass pr-kpi-card pr-kpi-night">
-                    <div class="pr-kpi-header">
-                        <span class="pr-kpi-badge">SHIFT 2</span>
-                        <span class="pr-kpi-icon">🌙</span>
-                    </div>
-                    <span class="pr-kpi-label">NIGHT SHIFT PASS RATE</span>
-                    <div class="pr-kpi-metrics">
-                        <span class="pr-kpi-value" id="pr-kpi-night-value">&ndash;</span>
-                        <span class="pr-kpi-rate" id="pr-kpi-night-rate">&ndash;%</span>
-                    </div>
-                    <span class="pr-kpi-sub" id="pr-kpi-night-sub">&ndash;</span>
-                </div>
-
-                <div class="glass pr-kpi-card pr-kpi-overall is-accent">
-                    <div class="pr-kpi-header">
-                        <span class="pr-kpi-badge is-accent">TOTAL PERFORMANCE</span>
-                        <span class="pr-kpi-icon">📊</span>
-                    </div>
-                    <span class="pr-kpi-label">OVERALL EFFICIENCY</span>
-                    <div class="pr-kpi-metrics">
-                        <span class="pr-kpi-value" id="pr-kpi-overall-value">&ndash;</span>
-                        <span class="pr-kpi-rate" id="pr-kpi-overall-rate">&ndash;%</span>
-                    </div>
-                    <span class="pr-kpi-sub" id="pr-kpi-overall-sub">&ndash;</span>
+                <div class="pr-line-kpi-table-container">
+                    <table class="pr-kpi-summary-table" id="pr-kpi-summary-table">
+                        <thead>
+                            <tr>
+                                <th>LINE</th>
+                                <th>SHIFT 1 PASS RATE</th>
+                                <th>SHIFT 2 PASS RATE</th>
+                                <th>OVERALL EFFICIENCY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pr-kpi-summary-tbody">
+                            <!-- Populated dynamically via JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -134,58 +114,40 @@
             </div>
         </section>
 
-        <!-- 📊 COMPACT SECONDARY SECTION: COMPACT HOURLY CHARTS -->
-        <section class="pr-secondary-section">
+        <!-- 📊 MONTHLY OVERALL TREND SECTION -->
+        <section class="pr-secondary-section pr-monthly-section">
             <div class="pr-section-header">
-                <h3>Analytics &amp; Hourly Performance Trends</h3>
-                <span class="pr-section-subtitle">Compact Trend Charts</span>
+                <div class="pr-section-title-group">
+                    <h3>Monthly Overall Pass Rate Trend</h3>
+                    <span class="pr-section-subtitle">24-Hour Production Timeline per Day (20:00 Prev. Day to 20:00 Current Day)</span>
+                </div>
+                <div class="pr-monthly-filter">
+                    <label class="pr-date-field">
+                        <span>Select Month</span>
+                        <input type="month" id="pr-month">
+                    </label>
+                </div>
             </div>
 
-            <!-- Compact Hourly Pass Rate Trend Charts -->
-            <div class="pr-charts-section pr-compact-charts">
-                <div class="pr-charts-row">
-                    <!-- Day Shift Hourly Chart -->
-                    <div class="glass pr-chart-card pr-compact-chart-card">
-                        <div class="pr-chart-head">
-                            <div>
-                                <h4>Day Shift Hourly Rate</h4>
-                                <span class="pr-shift-range">08:00 - 20:00 (Shift 1)</span>
-                            </div>
-                        </div>
-                        <svg class="pr-chart" id="pr-chart-day" viewBox="0 0 550 200" preserveAspectRatio="none" role="img" aria-label="Day Shift Hourly Trend"></svg>
-                        <div class="pr-chart-axis" id="pr-chart-day-axis"></div>
+            <!-- Fullwidth Monthly Trend Chart Card -->
+            <div class="glass pr-chart-card is-fullwidth pr-monthly-chart-card">
+                <div class="pr-chart-head">
+                    <div>
+                        <h4 id="pr-monthly-chart-title">Monthly Overall Performance Trend</h4>
+                        <span class="pr-shift-range">Daily Overall Average Across All Lines</span>
                     </div>
-
-                    <!-- Night Shift Hourly Chart -->
-                    <div class="glass pr-chart-card pr-compact-chart-card">
-                        <div class="pr-chart-head">
-                            <div>
-                                <h4>Night Shift Hourly Rate</h4>
-                                <span class="pr-shift-range">20:00 - 08:00 (Shift 2)</span>
-                            </div>
-                        </div>
-                        <svg class="pr-chart" id="pr-chart-night" viewBox="0 0 550 200" preserveAspectRatio="none" role="img" aria-label="Night Shift Hourly Trend"></svg>
-                        <div class="pr-chart-axis" id="pr-chart-night-axis"></div>
+                    <div class="pr-legend">
+                        <span class="legend-item"><span class="legend-dot is-line"></span> Daily Pass Rate Trend</span>
+                        <span class="legend-item"><span class="legend-dot is-threshold"></span> 5.0% Max Limit</span>
                     </div>
                 </div>
-
-                <!-- 24-Hour Pass Rate Flow Trend -->
-                <div class="glass pr-chart-card pr-compact-chart-card is-fullwidth">
-                    <div class="pr-chart-head">
-                        <div>
-                            <h4>24-Hour Overall Pass Rate Trend</h4>
-                            <span class="pr-shift-range">Full 24-Hour Production Timeline</span>
-                        </div>
-                        <div class="pr-legend">
-                            <span class="legend-item"><span class="legend-dot is-line"></span> Rate Trend</span>
-                            <span class="legend-item"><span class="legend-dot is-threshold"></span> 5.0% Max Limit</span>
-                        </div>
-                    </div>
-                    <svg class="pr-chart" id="pr-chart" viewBox="0 0 950 220" preserveAspectRatio="none" role="img" aria-label="Hourly user-pass rate trend"></svg>
-                    <div class="pr-chart-axis" id="pr-chart-axis"></div>
+                <div class="pr-chart-container">
+                    <svg class="pr-chart" id="pr-chart-monthly" viewBox="0 0 1000 240" preserveAspectRatio="none" role="img" aria-label="Monthly overall pass rate trend"></svg>
+                    <div class="pr-chart-axis" id="pr-chart-monthly-axis"></div>
                 </div>
             </div>
         </section>
+
     </main>
 
     <script src="~/js/production-rate.js" asp-append-version="true"></script>

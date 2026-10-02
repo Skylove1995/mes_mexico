@@ -2,33 +2,19 @@
   var REFRESH_MS = 60000;
 
   var dateInput = document.getElementById('pr-date');
+  var monthInput = document.getElementById('pr-month');
   var updatedEl = document.getElementById('pr-updated');
   var dayTable = document.getElementById('pr-table-day');
   var nightTable = document.getElementById('pr-table-night');
   var tabs = document.querySelectorAll('.pr-tabs button');
 
-  // KPI Elements
-  var kpiDayValue = document.getElementById('pr-kpi-day-value');
-  var kpiDayRate = document.getElementById('pr-kpi-day-rate');
-  var kpiDaySub = document.getElementById('pr-kpi-day-sub');
+  // KPI Table Elements
+  var kpiSummaryTbody = document.getElementById('pr-kpi-summary-tbody');
 
-  var kpiNightValue = document.getElementById('pr-kpi-night-value');
-  var kpiNightRate = document.getElementById('pr-kpi-night-rate');
-  var kpiNightSub = document.getElementById('pr-kpi-night-sub');
-
-  var kpiOverallValue = document.getElementById('pr-kpi-overall-value');
-  var kpiOverallRate = document.getElementById('pr-kpi-overall-rate');
-  var kpiOverallSub = document.getElementById('pr-kpi-overall-sub');
-
-  // Chart Elements
-  var chartDaySvg = document.getElementById('pr-chart-day');
-  var chartDayAxis = document.getElementById('pr-chart-day-axis');
-
-  var chartNightSvg = document.getElementById('pr-chart-night');
-  var chartNightAxis = document.getElementById('pr-chart-night-axis');
-
-  var chartOverallSvg = document.getElementById('pr-chart');
-  var chartOverallAxis = document.getElementById('pr-chart-axis');
+  // Monthly Chart Elements
+  var chartMonthlySvg = document.getElementById('pr-chart-monthly');
+  var chartMonthlyAxis = document.getElementById('pr-chart-monthly-axis');
+  var chartMonthlyTitle = document.getElementById('pr-monthly-chart-title');
 
   var currentType = 'SPI';
   var lastData = null;
@@ -40,35 +26,53 @@
     return new Date(d - tz).toISOString().slice(0, 10);
   }
 
+  function currentMonthIso() {
+    var d = new Date();
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    return yyyy + '-' + mm;
+  }
+
   if (dateInput) {
     dateInput.value = todayIso();
+  }
+
+  if (monthInput) {
+    monthInput.value = currentMonthIso();
   }
 
   function formatNumber(num) {
     return (num || 0).toLocaleString('en-US');
   }
 
-  function renderCell(cell) {
+  function renderCell(cell, isTotalColumn) {
     var td = document.createElement('td');
-    if (!cell) {
-      td.innerHTML = '<div class="pr-cell is-empty"></div>';
+    if (!cell || cell.total === 0) {
+      var emptyClass = 'pr-cell is-empty' + (isTotalColumn ? ' pr-cell-total' : '');
+      td.innerHTML = '<div class="' + emptyClass + '"><span class="pr-dash">&ndash;</span></div>';
       return td;
     }
-    
+
+
     var isExceeded = cell.pct > 5.0;
-    var cellClass = 'pr-cell' + (isExceeded ? ' is-exceeded' : '');
-    var pctClass = 'pr-pct' + (isExceeded ? ' is-danger' : '');
-    var alertBadge = isExceeded ? ' <span class="pr-alert-icon">⚠️</span>' : '';
+    var isOk = !isExceeded && cell.total > 0;
+
+    var cellClass = 'pr-cell' +
+      (isExceeded ? ' is-exceeded' : '') +
+      (isOk ? ' is-ok' : '') +
+      (isTotalColumn ? ' pr-cell-total' + (isExceeded ? ' is-total-exceeded' : ' is-total-ok') : '');
+
+    var pctClass = 'pr-pct' + (isExceeded ? ' is-danger' : (isOk ? ' is-success' : ''));
+    var alertBadge = isExceeded ? ' <span class="pr-alert-icon">⚠️</span>' : (isOk ? ' <span class="pr-ok-icon">✓</span>' : '');
 
     td.innerHTML =
       '<div class="' + cellClass + '">' +
-        '<span class="pr-total">' + formatNumber(cell.total) + '</span>' +
-        '<span class="pr-pass">UP ' + formatNumber(cell.userPass) + '</span>' +
-        '<span class="' + pctClass + '">' + cell.pct.toFixed(1) + '%' + alertBadge + '</span>' +
+      '<span class="pr-total">' + formatNumber(cell.total) + '</span>' +
+      '<span class="pr-pass">UP ' + formatNumber(cell.userPass) + '</span>' +
+      '<span class="' + pctClass + '">' + cell.pct.toFixed(1) + '%' + alertBadge + '</span>' +
       '</div>';
     return td;
   }
-
 
   function renderTable(table, shiftData) {
     if (!table) return;
@@ -78,11 +82,19 @@
     var thead = document.createElement('thead');
     var headRow = document.createElement('tr');
     headRow.appendChild(document.createElement('th')).textContent = 'Line';
+
     shiftData.hourLabels.forEach(function (label) {
       var th = document.createElement('th');
       th.textContent = label;
       headRow.appendChild(th);
     });
+
+    // 🏆 Add Line Total Column Header
+    var totalTh = document.createElement('th');
+    totalTh.className = 'pr-th-total';
+    totalTh.textContent = 'LINE TOTAL';
+    headRow.appendChild(totalTh);
+
     thead.appendChild(headRow);
     table.appendChild(thead);
 
@@ -92,173 +104,262 @@
       var th = document.createElement('th');
       th.textContent = lineRow.line;
       tr.appendChild(th);
+
       lineRow.hours.forEach(function (cell) {
-        tr.appendChild(renderCell(cell));
+        tr.appendChild(renderCell(cell, false));
       });
+
+      // 🏆 Render Line Total Cell at the end of matrix
+      tr.appendChild(renderCell(lineRow.totalCell, true));
+
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
   }
 
-  function renderSingleKpiCard(valEl, rateEl, subEl, summary) {
-    if (!valEl || !rateEl || !subEl) return;
-    if (!summary || summary.total === 0) {
-      valEl.textContent = '–';
-      rateEl.textContent = '0.0%';
-      subEl.textContent = 'No Inspection Data';
-      return;
-    }
-
-    valEl.textContent = formatNumber(summary.userPass) + ' UP';
-    rateEl.textContent = summary.pct.toFixed(1) + '%';
-    subEl.textContent = formatNumber(summary.userPass) + ' / ' + formatNumber(summary.total) + ' Total Inspected';
-  }
-
   function renderKpis(typeData) {
-    renderSingleKpiCard(kpiDayValue, kpiDayRate, kpiDaySub, typeData ? typeData.daySummary : null);
-    renderSingleKpiCard(kpiNightValue, kpiNightRate, kpiNightSub, typeData ? typeData.nightSummary : null);
-    renderSingleKpiCard(kpiOverallValue, kpiOverallRate, kpiOverallSub, typeData ? typeData.overallSummary : null);
-  }
+    if (!kpiSummaryTbody) return;
+    kpiSummaryTbody.innerHTML = '';
 
-  function extractShiftHourlyPoints(shiftTable) {
-    if (!shiftTable || !shiftTable.hourLabels || !shiftTable.lines) return [];
-    var points = [];
-
-    shiftTable.hourLabels.forEach(function (label, hIndex) {
-      var total = 0;
-      var userPass = 0;
-      shiftTable.lines.forEach(function (line) {
-        var cell = line.hours[hIndex];
-        if (cell) {
-          total += cell.total || 0;
-          userPass += cell.userPass || 0;
-        }
-      });
-      var pct = total > 0 ? (userPass * 100.0) / total : 0;
-      points.push({
-        hourLabel: label,
-        total: total,
-        userPass: userPass,
-        pct: pct
-      });
-    });
-
-    return points;
-  }
-
-  function renderChartSvg(chartSvg, chartAxis, trend, viewBoxW, viewBoxH, gradientId) {
-    if (!chartAxis || !chartSvg) return;
-    chartAxis.innerHTML = '';
-    if (!trend || trend.length === 0) {
-      chartSvg.innerHTML = '';
+    if (!typeData || !typeData.lineSummaries || typeData.lineSummaries.length === 0) {
+      kpiSummaryTbody.innerHTML = '<tr><td colspan="4" class="pr-empty-kpi">No Line Performance Data Available</td></tr>';
       return;
     }
 
-    var left = 45, right = 25, top = 26, bottom = 28;
-    var width = viewBoxW || 550, height = viewBoxH || 200;
+    typeData.lineSummaries.forEach(function (ls) {
+      var tr = document.createElement('tr');
+
+      // Line Name
+      var tdLine = document.createElement('td');
+      tdLine.className = 'pr-kpi-line-name';
+      tdLine.innerHTML = '<strong>' + ls.line + '</strong>';
+      tr.appendChild(tdLine);
+
+      // Shift 1 (Day)
+      var tdDay = document.createElement('td');
+      var dayExc = ls.daySummary.pct > 5.0;
+      var dayOk = !dayExc && ls.daySummary.total > 0;
+      tdDay.innerHTML =
+        '<div class="pr-kpi-subcell">' +
+        '<span class="pr-kpi-subval">UP ' + formatNumber(ls.daySummary.userPass) + ' / ' + formatNumber(ls.daySummary.total) + '</span>' +
+        '<span class="pr-kpi-subpct ' + (dayExc ? 'is-danger' : (dayOk ? 'is-success' : 'is-muted')) + '">' +
+        ls.daySummary.pct.toFixed(1) + '%' + (dayExc ? ' ⚠️' : (dayOk ? ' ✓' : '')) +
+        '</span>' +
+        '</div>';
+      tr.appendChild(tdDay);
+
+      // Shift 2 (Night)
+      var tdNight = document.createElement('td');
+      var nightExc = ls.nightSummary.pct > 5.0;
+      var nightOk = !nightExc && ls.nightSummary.total > 0;
+      tdNight.innerHTML =
+        '<div class="pr-kpi-subcell">' +
+        '<span class="pr-kpi-subval">UP ' + formatNumber(ls.nightSummary.userPass) + ' / ' + formatNumber(ls.nightSummary.total) + '</span>' +
+        '<span class="pr-kpi-subpct ' + (nightExc ? 'is-danger' : (nightOk ? 'is-success' : 'is-muted')) + '">' +
+        ls.nightSummary.pct.toFixed(1) + '%' + (nightExc ? ' ⚠️' : (nightOk ? ' ✓' : '')) +
+        '</span>' +
+        '</div>';
+      tr.appendChild(tdNight);
+
+      // Overall Efficiency
+      var tdOverall = document.createElement('td');
+      var overExc = ls.overallSummary.pct > 5.0;
+      var overOk = !overExc && ls.overallSummary.total > 0;
+      tdOverall.innerHTML =
+        '<div class="pr-kpi-subcell is-accent">' +
+        '<span class="pr-kpi-subval">UP ' + formatNumber(ls.overallSummary.userPass) + ' / ' + formatNumber(ls.overallSummary.total) + '</span>' +
+        '<span class="pr-kpi-subpct ' + (overExc ? 'is-danger' : (overOk ? 'is-success' : 'is-muted')) + '">' +
+        ls.overallSummary.pct.toFixed(1) + '%' + (overExc ? ' ⚠️' : (overOk ? ' ✓' : '')) +
+        '</span>' +
+        '</div>';
+      tr.appendChild(tdOverall);
+
+      kpiSummaryTbody.appendChild(tr);
+    });
+  }
+
+  function renderMonthlyTrendChart(data) {
+    if (!chartMonthlySvg || !chartMonthlyAxis) return;
+    chartMonthlyAxis.innerHTML = '';
+
+    if (!data || !data.points || data.points.length === 0) {
+      chartMonthlySvg.innerHTML = '<text x="600" y="180" text-anchor="middle" fill="var(--text-muted)">No monthly data available</text>';
+      return;
+    }
+
+    if (chartMonthlyTitle) {
+      chartMonthlyTitle.textContent = 'Monthly Overall Performance Trend - ' + (data.machineType || currentType) + ' (' + data.month + ')';
+    }
+
+    var points = data.points;
+    var left = 60, right = 40, top = 65, bottom = 45;
+    var width = 1200, height = 420;
     var plotW = width - left - right;
     var plotH = height - top - bottom;
 
-    var maxPct = trend.reduce(function (m, p) { return Math.max(m, p.pct); }, 0);
-    var yMax = Math.max(10, Math.ceil((maxPct * 1.3) / 5) * 5);
-
-    var withData = trend.filter(function (p) { return p.total > 0; });
-    var avgPct = withData.length
-      ? withData.reduce(function (s, p) { return s + p.pct; }, 0) / withData.length
-      : 0;
+    var maxPct = points.reduce(function (m, p) { return Math.max(m, p.pct); }, 0);
+    // Y-axis steps: 0, 5, 10, 15, 20...
+    var yMax = Math.max(20, Math.ceil(maxPct / 5) * 5);
 
     function xAt(i) {
-      return trend.length === 1 ? left + plotW / 2 : left + (i / (trend.length - 1)) * plotW;
+      return points.length <= 1 ? left + plotW / 2 : left + (i / (points.length - 1)) * plotW;
     }
+
     function yAt(pct) {
       return top + plotH - (Math.min(pct, yMax) / yMax) * plotH;
     }
 
-    var linePts = trend.map(function (p, i) { return xAt(i) + ',' + yAt(p.pct); });
+    var linePts = points.map(function (p, i) { return xAt(i) + ',' + yAt(p.pct); });
     var linePath = 'M' + linePts.join(' L');
-    var areaPath = linePath + ' L' + xAt(trend.length - 1) + ',' + (top + plotH) +
+    var areaPath = linePath + ' L' + xAt(points.length - 1) + ',' + (top + plotH) +
       ' L' + xAt(0) + ',' + (top + plotH) + ' Z';
-    var avgY = yAt(avgPct);
     var limitY = yAt(5.0);
 
-    // Grid lines & High-contrast Y-axis ticks
-    var gridTicks = [0, 0.25, 0.5, 0.75, 1];
-    var grid = gridTicks.map(function (f) {
-      var y = top + plotH * f;
-      var tickVal = (yMax * (1 - f)).toFixed(1).replace('.0', '') + '%';
-      return '<line x1="' + left + '" y1="' + y + '" x2="' + (width - right) + '" y2="' + y + '"></line>' +
-        '<text class="pr-chart-ytick" x="' + (left - 8) + '" y="' + (y + 4) + '">' + tickVal + '</text>';
-    }).join('');
+    // 1. Grid lines (Vertical day grid & Horizontal 0-5-10-15-20 grid)
+    var gridHtml = '';
+    
+    // Vertical grid lines for each day column
+    points.forEach(function (p, i) {
+      var cx = xAt(i);
+      gridHtml += '<line class="pr-chart-vgrid" x1="' + cx + '" y1="' + top + '" x2="' + cx + '" y2="' + (top + plotH) + '"></line>';
+    });
 
-    // 5.0% Limit Threshold Line
-    var limitLine = yMax >= 5.0 ?
+    // Horizontal grid lines for 0%, 5%, 10%, 15%, 20%
+    var yStepVals = [];
+    for (var v = 0; v <= yMax; v += 5) {
+      yStepVals.push(v);
+    }
+    yStepVals.forEach(function (val) {
+      var y = yAt(val);
+      gridHtml += '<line class="pr-chart-hgrid" x1="' + left + '" y1="' + y + '" x2="' + (width - right) + '" y2="' + y + '"></line>';
+      gridHtml += '<text class="pr-chart-ytick" x="' + (left - 12) + '" y="' + (y + 4) + '">' + val + '%</text>';
+    });
+
+    // 2. ONLY 1 Dashed Red Threshold Line at 5.0% Max Limit (No average line!)
+    var limitLine =
       '<line class="pr-chart-limit" x1="' + left + '" y1="' + limitY + '" x2="' + (width - right) + '" y2="' + limitY + '"></line>' +
-      '<text class="pr-chart-limit-text" x="' + (width - right - 75) + '" y="' + (limitY - 6) + '">🚨 5.0% Max Limit</text>' : '';
+      '<text class="pr-chart-limit-text" x="' + (width - right - 10) + '" y="' + (limitY - 8) + '" text-anchor="end">5.0% Max Limit</text>';
 
-    // Data points & Value Labels
-    var dots = '';
-    var valueLabels = '';
+    // 3. Find Global Max Peak & Local Peaks (> 5.0%)
+    var maxIdx = -1;
+    var highestVal = 0;
+    points.forEach(function (p, i) {
+      if (p.pct > highestVal) {
+        highestVal = p.pct;
+        maxIdx = i;
+      }
+    });
 
-    trend.forEach(function (p, i) {
+    var localPeakIndices = [];
+    points.forEach(function (p, i) {
+      if (p.pct > 5.0) {
+        var prevPct = i > 0 ? points[i - 1].pct : 0;
+        var nextPct = i < points.length - 1 ? points[i + 1].pct : 0;
+        if (p.pct >= prevPct && p.pct >= nextPct) {
+          localPeakIndices.push(i);
+        }
+      }
+    });
+
+    // Render Data Dots & Speech Bubble Callout Badges
+    var dotsHtml = '';
+    var calloutsHtml = '';
+    var lastCalloutX = -999;
+
+    points.forEach(function (p, i) {
       var cx = xAt(i);
       var cy = yAt(p.pct);
       var isExceeded = p.pct > 5.0;
       var hasData = p.total > 0;
-      var titleText = p.hourLabel + ': ' + p.pct.toFixed(1) + '%' + (isExceeded ? ' ⚠️ EXCEEDED' : '') + ' (' + formatNumber(p.userPass) + '/' + formatNumber(p.total) + ' UP)';
-      
-      var dotClass = 'pr-chart-dot' + (isExceeded ? ' is-exceeded' : '') + (!hasData ? ' is-nodata' : '');
-      var rRadius = isExceeded ? '4.5' : (hasData ? '3.5' : '2.5');
+      var isOk = !isExceeded && hasData;
+      var isGlobalMax = (i === maxIdx && highestVal > 5.0);
+      var isLocalPeak = localPeakIndices.includes(i);
 
-      dots += '<circle class="' + dotClass + '" cx="' + cx + '" cy="' + cy + '" r="' + rRadius + '">' +
+      var titleText = 'Day ' + String(p.day).padStart(2, '0') + ' (' + p.dateStr + ')\n20:00 Prev Day - 20:00 Today\nPass Rate: ' + p.pct.toFixed(1) + '%' +
+        (isExceeded ? ' ⚠️ EXCEEDED' : ' ✓ OK') + '\n(' + formatNumber(p.userPass) + ' / ' + formatNumber(p.total) + ' Inspected)';
+
+      var dotClass = 'pr-chart-dot' + (isExceeded ? ' is-exceeded' : '') + (isOk ? ' is-ok' : '') + (!hasData ? ' is-nodata' : '');
+      var rRadius = isGlobalMax ? '6' : (isExceeded ? '4.5' : (hasData ? '3.5' : '2'));
+
+      dotsHtml += '<circle class="' + dotClass + '" cx="' + cx + '" cy="' + cy + '" r="' + rRadius + '">' +
         '<title>' + titleText + '</title></circle>';
 
-      // Render value labels above data points for high readability
-      if (hasData) {
-        var labelY = cy - (isExceeded ? 9 : 7);
-        var fontWeight = isExceeded ? '800' : '600';
-        var pctStr = p.pct.toFixed(1) + '%';
+      // Render Callout speech bubble ONLY for Global Peak or Local Peaks!
+      if (isGlobalMax) {
+        // Global Peak Callout: "Peak: 13.1%"
+        var bw = 105, bh = 28;
+        var bx = cx - bw / 2;
+        var by = cy - bh - 14;
+        if (bx < left + 5) bx = left + 5;
+        if (bx + bw > width - right - 5) bx = width - right - 5 - bw;
 
-        valueLabels += '<text class="pr-chart-vlabel' + (isExceeded ? ' is-exceeded' : '') + '" x="' + cx + '" y="' + labelY + '" font-weight="' + fontWeight + '">' + pctStr + '</text>';
+        calloutsHtml += '<g class="pr-chart-callout-box">' +
+          '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="6" class="pr-callout-bg is-peak"></rect>' +
+          '<path d="M' + (cx - 4) + ',' + (by + bh) + ' L' + cx + ',' + (cy - 6) + ' L' + (cx + 4) + ',' + (by + bh) + ' Z" class="pr-callout-pointer is-peak"></path>' +
+          '<text x="' + (bx + bw / 2) + '" y="' + (by + 18) + '" text-anchor="middle" class="pr-callout-text is-peak">Peak: ' + p.pct.toFixed(1) + '%</text>' +
+        '</g>';
+        lastCalloutX = cx;
+      } else if (isLocalPeak && (cx - lastCalloutX >= 35)) {
+        // Local Peak Callout: "21: 7.8%"
+        var bw = 85, bh = 26;
+        var bx = cx - bw / 2;
+        var by = cy - bh - 12;
+        if (bx < left + 5) bx = left + 5;
+        if (bx + bw > width - right - 5) bx = width - right - 5 - bw;
+
+        calloutsHtml += '<g class="pr-chart-callout-box">' +
+          '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="6" class="pr-callout-bg"></rect>' +
+          '<path d="M' + (cx - 4) + ',' + (by + bh) + ' L' + cx + ',' + (cy - 5) + ' L' + (cx + 4) + ',' + (by + bh) + ' Z" class="pr-callout-pointer"></path>' +
+          '<text x="' + (bx + bw / 2) + '" y="' + (by + 17) + '" text-anchor="middle" class="pr-callout-text">' +
+            String(p.day).padStart(2, '0') + ': <tspan class="pr-callout-alert">' + p.pct.toFixed(1) + '%</tspan>' +
+          '</text>' +
+        '</g>';
+        lastCalloutX = cx;
       }
     });
 
-    var gId = gradientId || 'chart-grad-' + Math.random().toString(36).substring(2, 7);
 
-    chartSvg.innerHTML =
+    var gId = 'grad-monthly-' + Math.random().toString(36).substring(2, 7);
+
+    chartMonthlySvg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+    chartMonthlySvg.innerHTML =
       '<defs><linearGradient id="' + gId + '" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0%" style="stop-color:var(--brass-strong);stop-opacity:.35"></stop>' +
-        '<stop offset="100%" style="stop-color:var(--brass-strong);stop-opacity:0.01"></stop>' +
+        '<stop offset="0%" style="stop-color:#94a3b8;stop-opacity:.25"></stop>' +
+        '<stop offset="100%" style="stop-color:#94a3b8;stop-opacity:0.02"></stop>' +
       '</linearGradient></defs>' +
-      '<g class="pr-chart-grid">' + grid + '</g>' +
-      '<line class="pr-chart-avg" x1="' + left + '" y1="' + avgY + '" x2="' + (width - right) + '" y2="' + avgY + '"></line>' +
+      '<g class="pr-chart-grid">' + gridHtml + '</g>' +
       limitLine +
       '<path class="pr-chart-area" d="' + areaPath + '" fill="url(#' + gId + ')"></path>' +
       '<path class="pr-chart-line" d="' + linePath + '"></path>' +
-      valueLabels +
-      dots;
+      dotsHtml +
+      calloutsHtml;
 
-    var step = trend.length > 15 ? 2 : 1;
-    trend.forEach(function (p, i) {
-      if (i % step !== 0) return;
+    // Render X-axis ticks (Day 01, Day 02, ...)
+    points.forEach(function (p) {
       var span = document.createElement('span');
-      span.textContent = p.hourLabel.split('-')[0] + 'h';
-      chartAxis.appendChild(span);
+      span.textContent = String(p.day).padStart(2, '0');
+      chartMonthlyAxis.appendChild(span);
     });
   }
 
-  function renderAllCharts(typeData) {
-    if (!typeData) return;
-
-    // 1. Day Shift Chart (550x200)
-    var dayTrend = extractShiftHourlyPoints(typeData.day);
-    renderChartSvg(chartDaySvg, chartDayAxis, dayTrend, 550, 200, 'grad-day-shift');
-
-    // 2. Night Shift Chart (550x200)
-    var nightTrend = extractShiftHourlyPoints(typeData.night);
-    renderChartSvg(chartNightSvg, chartNightAxis, nightTrend, 550, 200, 'grad-night-shift');
-
-    // 3. 24h Overall Flow Chart (950x220)
-    renderChartSvg(chartOverallSvg, chartOverallAxis, typeData.trend, 950, 220, 'grad-overall-shift');
+  function fetchMonthlyTrend() {
+    var month = (monthInput && monthInput.value) ? monthInput.value : currentMonthIso();
+    fetch('/api/smt/production-rate/monthly-trend?month=' + encodeURIComponent(month) + '&type=' + encodeURIComponent(currentType), {
+      headers: { Accept: 'application/json' }
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('monthly trend request failed');
+        return res.json();
+      })
+      .then(function (data) {
+        renderMonthlyTrendChart(data);
+      })
+      .catch(function (err) {
+        console.error(err);
+        if (chartMonthlySvg) {
+          chartMonthlySvg.innerHTML = '<text x="600" y="140" text-anchor="middle" fill="var(--danger)">Error loading monthly trend</text>';
+        }
+      });
   }
 
   function renderActiveTab() {
@@ -267,7 +368,6 @@
     renderTable(dayTable, typeData ? typeData.day : null);
     renderTable(nightTable, typeData ? typeData.night : null);
     renderKpis(typeData);
-    renderAllCharts(typeData);
   }
 
   function fetchData() {
@@ -297,13 +397,13 @@
       });
   }
 
-
   tabs.forEach(function (btn) {
     btn.addEventListener('click', function () {
       tabs.forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
       btn.setAttribute('aria-selected', 'true');
       currentType = btn.getAttribute('data-type');
       renderActiveTab();
+      fetchMonthlyTrend();
     });
   });
 
@@ -313,8 +413,18 @@
     });
   }
 
+  if (monthInput) {
+    monthInput.addEventListener('change', function () {
+      fetchMonthlyTrend();
+    });
+  }
+
   fetchData();
-  timer = setInterval(fetchData, REFRESH_MS);
+  fetchMonthlyTrend();
+  timer = setInterval(function () {
+    fetchData();
+    fetchMonthlyTrend();
+  }, REFRESH_MS);
+
   window.addEventListener('beforeunload', function () { clearInterval(timer); });
 })();
-

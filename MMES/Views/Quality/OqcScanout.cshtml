@@ -9,10 +9,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OQC Inspection - HAENG SUNG MEX-MES 3.0</title>
     <script>
-        document.documentElement.setAttribute('data-theme', 'dark');
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
     </script>
     <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/oqc-scanout.css" asp-append-version="true" />
     <!-- Tailwind CSS v3 via CDN (with console warning suppressor) -->
     <script>
         (function() {
@@ -23,51 +27,51 @@
             };
         })();
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="~/js/tailwind-runtime.js" asp-append-version="true"></script>
     <!-- Chart.js & Datalabels Plugin -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="~/js/chart.min.js" asp-append-version="true"></script>
+    <script src="~/js/chartjs-plugin-datalabels.min.js" asp-append-version="true"></script>
 </head>
 
-<body class="dashboard-page bg-[#0B0F17] text-slate-100 font-sans antialiased min-h-screen">
+<body class="dashboard-page font-sans antialiased min-h-screen">
     <partial name="_DashboardHeader" />
 
     <main class="oqc-container max-w-[1700px] mx-auto">
         <!-- Sub Header & Date Control Bar -->
-        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-5 bg-slate-900/90 backdrop-blur border border-slate-800 p-4 rounded-xl shadow-lg">
+        <div class="oqc-card-surface p-4 mb-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-400">
+                <div class="p-2.5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-500">
                     <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"></path>
                     </svg>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold tracking-tight text-white">OQC INSPECTION</h1>
-                        <span class="px-2 py-0.5 text-xs font-semibold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">REAL-TIME MES</span>
+                        <h1 class="text-xl font-bold tracking-tight oqc-text-primary">OQC INSPECTION</h1>
+                        <span class="px-2 py-0.5 text-xs font-semibold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 rounded">REAL-TIME MES</span>
                     </div>
-                    <p class="text-xs text-slate-400">Hourly Scanout Output</p>
+                    <p class="text-xs oqc-text-secondary">Hourly Scanout Output</p>
                 </div>
             </div>
 
             <!-- Controls -->
             <div class="flex flex-wrap items-center gap-3">
-                <div class="hidden lg:flex flex-col text-right px-3 py-1 bg-slate-950/80 border border-slate-800 rounded-lg text-xs">
-                    <span class="text-slate-400">Shift Execution Window:</span>
-                    <span class="font-mono text-cyan-300 font-medium" id="shiftTimeRangeDisplay">Loading...</span>
+                <div class="oqc-input hidden lg:flex flex-col text-right px-3 py-1 text-xs">
+                    <span class="oqc-text-secondary">Shift Execution Window:</span>
+                    <span class="font-mono text-cyan-500 font-medium" id="shiftTimeRangeDisplay">Loading...</span>
                 </div>
 
                 <!-- Date Picker Calendar -->
-                <div class="flex items-center gap-2 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-sm focus-within:border-cyan-500 transition">
-                    <svg class="w-4 h-4 text-cyan-400" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="oqc-input flex items-center gap-2 px-3 py-2 text-sm focus-within:border-cyan-500 transition">
+                    <svg class="w-4 h-4 text-cyan-500" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
                     </svg>
-                    <label for="workDate" class="text-xs text-slate-400 font-medium">Production Date:</label>
-                    <input type="date" id="workDate" class="bg-transparent text-white font-mono outline-none cursor-pointer">
+                    <label for="workDate" class="text-xs oqc-text-secondary font-medium">Production Date:</label>
+                    <input type="date" id="workDate" class="bg-transparent oqc-text-primary font-mono outline-none cursor-pointer">
                 </div>
 
                 <!-- Shift Filter -->
-                <select id="shiftFilter" class="bg-slate-950 border border-slate-700 text-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-cyan-500">
+                <select id="shiftFilter" class="oqc-input text-sm rounded-lg px-3 py-2 outline-none focus:border-cyan-500">
                     <option value="ALL">All Shifts (20h - 20h)</option>
                     <option value="NIGHT">Night Shift (20h - 08h)</option>
                     <option value="DAY">Day Shift (08h - 20h)</option>
@@ -92,15 +96,15 @@
         </div>
 
         <!-- Metric Toggle Toolbar & Summary KPIs -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 mb-5 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="oqc-card-surface p-3.5 mb-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs text-slate-400 font-medium mr-1 uppercase tracking-wider">Matrix Display Mode:</span>
+                <span class="text-xs oqc-text-secondary font-medium mr-1 uppercase tracking-wider">Matrix Display Mode:</span>
                 
                 <button id="btnModeQty" onclick="switchMatrixMode('QTY')" class="px-3 py-1.5 bg-cyan-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow">
                     <span>📦 Output Qty (PCS)</span>
                 </button>
 
-                <button id="btnModeUPH" onclick="switchMatrixMode('UPH')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition flex items-center gap-1.5 border border-slate-700">
+                <button id="btnModeUPH" onclick="switchMatrixMode('UPH')" class="px-3 py-1.5 oqc-input hover:bg-slate-700/20 text-xs font-bold rounded-lg transition flex items-center gap-1.5">
                     <span>⚡ Hourly UPH Rate</span>
                 </button>
             </div>
@@ -108,16 +112,16 @@
             <!-- Quick Status Indicators -->
             <div class="flex items-center gap-4 text-xs font-mono">
                 <div class="flex items-center gap-1.5">
-                    <span class="text-slate-400">Total Output:</span>
-                    <span class="text-white font-bold" id="kpiTotalQty">&ndash;</span>
+                    <span class="oqc-text-secondary">Total Output:</span>
+                    <span class="oqc-text-primary font-bold" id="kpiTotalQty">&ndash;</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="text-slate-400">Avg UPH:</span>
-                    <span class="text-cyan-400 font-bold" id="kpiAvgUph">&ndash;</span>
+                    <span class="oqc-text-secondary">Avg UPH:</span>
+                    <span class="text-cyan-500 font-bold" id="kpiAvgUph">&ndash;</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="text-slate-400">Peak UPH:</span>
-                    <span class="text-indigo-400 font-bold" id="kpiPeakUph">&ndash;</span>
+                    <span class="oqc-text-secondary">Peak UPH:</span>
+                    <span class="text-indigo-500 font-bold" id="kpiPeakUph">&ndash;</span>
                 </div>
             </div>
         </div>
@@ -125,8 +129,8 @@
         <!-- MATRIX CONTENT AREA WITH INLINE LOADING OVERLAY (SCOPED TO MATRIX & CHART ONLY) -->
         <div class="relative min-h-[550px]" id="matrixContentArea">
             <!-- INLINE LOADING OVERLAY -->
-            <div id="matrixLoadingOverlay" class="absolute inset-0 z-40 hidden flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md rounded-2xl transition-all duration-300">
-                <div class="relative bg-slate-900/95 border-2 border-cyan-500/40 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl text-center overflow-hidden">
+            <div id="matrixLoadingOverlay" class="absolute inset-0 z-40 hidden flex flex-col items-center justify-center backdrop-blur-md rounded-2xl transition-all duration-300">
+                <div class="loading-card relative rounded-2xl p-6 max-w-sm w-full mx-4 text-center overflow-hidden">
                     <!-- Ambient Glow -->
                     <div class="absolute -top-12 -left-12 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl"></div>
                     <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
@@ -138,105 +142,106 @@
                     </div>
 
                     <!-- Title & Percentage -->
-                    <h3 class="text-base font-bold text-white tracking-wide mb-1 flex items-center justify-center gap-1.5">
+                    <h3 class="text-base font-bold oqc-text-primary tracking-wide mb-1 flex items-center justify-center gap-1.5">
                         <span>Loading Scanout Matrix</span>
-                        <span class="text-cyan-400 font-mono text-sm" id="loadPercentage">0%</span>
+                        <span class="text-cyan-500 font-mono text-sm" id="loadPercentage">0%</span>
                     </h3>
-                    <p class="text-xs text-slate-300 mb-3 h-5 flex items-center justify-center font-medium" id="loadStatusText">
+                    <p class="text-xs oqc-text-secondary mb-3 h-5 flex items-center justify-center font-medium" id="loadStatusText">
                         Connecting to database...
                     </p>
 
                     <!-- Dynamic Real Progress Bar -->
-                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden mb-2 border border-slate-700/80 p-0.5">
+                    <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden mb-2 border border-slate-300 dark:border-slate-700/80 p-0.5">
                         <div id="loadProgressBar" class="bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-200 ease-out" style="width: 0%;"></div>
                     </div>
 
-                    <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mt-2">
+                    <div class="flex items-center justify-between text-[11px] font-mono oqc-text-tertiary mt-2">
                         <span>Scanout Data Engine</span>
-                        <span class="text-cyan-400 font-medium" id="loadProgressDetail">Initializing...</span>
+                        <span class="text-cyan-500 font-medium" id="loadProgressDetail">Initializing...</span>
                     </div>
                 </div>
             </div>
-        <main class="bg-slate-900/90 border border-slate-800 rounded-xl shadow-2xl overflow-hidden mb-6">
-            <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-950/80">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></span>
-                        <h2 class="text-lg font-extrabold text-white tracking-wide" id="matrixTableTitle">
-                            PRODUCTION MATRIX — OUTPUT QUANTITY (PCS)
-                        </h2>
+
+            <main class="oqc-card-surface overflow-hidden mb-6">
+                <div class="p-4 border-b border-[var(--border-subtle)] flex flex-col md:flex-row md:items-center justify-between gap-3 bg-[var(--bg-surface-inset)]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></span>
+                            <h2 class="text-lg font-extrabold oqc-text-primary tracking-wide" id="matrixTableTitle">
+                                PRODUCTION MATRIX — OUTPUT QUANTITY (PCS)
+                            </h2>
+                        </div>
+                        <p class="text-xs oqc-text-secondary mt-0.5">Real-time scanout output aggregated by Line &amp; Model Suffix</p>
                     </div>
-                    <p class="text-xs text-slate-400 mt-0.5">Real-time scanout output aggregated by Line &amp; Model Suffix</p>
+
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="oqc-text-secondary hidden lg:inline">Heatmap Thresholds:</span>
+                        <span class="px-2 py-0.5 rounded cell-high font-mono">&ge; 1,000 (High)</span>
+                        <span class="px-2 py-0.5 rounded cell-mid font-mono">600 - 999 (Normal)</span>
+                        <span class="px-2 py-0.5 rounded cell-low font-mono">300 - 599 (Low)</span>
+                        <span class="px-2 py-0.5 rounded cell-critical font-mono">&lt; 300 (Warning)</span>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-3 text-xs">
-                    <span class="text-slate-400 hidden lg:inline">Heatmap Thresholds:</span>
-                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">&ge; 4,000 (High)</span>
-                    <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">3,000 - 3,999 (Normal)</span>
-                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">1,500 - 2,999 (Low)</span>
-                    <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">&lt; 1,500 (Warning)</span>
+                <!-- Scrollable High Density Matrix -->
+                <div class="overflow-x-auto overflow-y-max max-h-[620px] relative">
+                    <table class="w-full text-left border-collapse text-xs font-mono" id="matrixMainTable">
+                        <thead>
+                            <tr class="sticky-header uppercase tracking-wider text-[11px] border-b border-[var(--border-subtle)]">
+                                <th class="p-3 sticky-header-col-1 w-[110px] min-w-[110px] border-r border-[var(--border-subtle)]">LINE</th>
+                                <th class="p-3 sticky-header-col-2 w-[140px] min-w-[140px] border-r border-[var(--border-subtle)]">MODEL SUFFIX</th>
+                                
+                                <!-- Night Shift Headers (6 Slots: 20:00 - 08:00) -->
+                                <th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 20:00 - 22:00">20-22</th>
+                                <th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 22:00 - 00:00">22-00</th>
+                                <th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 00:00 - 02:00">00-02</th>
+                                <th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 02:00 - 04:00">02-04</th>
+                                <th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 04:00 - 06:00">04-06</th>
+                                <th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 06:00 - 08:00">06-08</th>
+                                <th class="p-2.5 text-center th-night-total min-w-[85px]">NIGHT TOTAL</th>
+
+                                <!-- Day Shift Headers (6 Slots: 08:00 - 20:00) -->
+                                <th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 08:00 - 10:00">08-10</th>
+                                <th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 10:00 - 12:00">10-12</th>
+                                <th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 12:00 - 14:00">12-14</th>
+                                <th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 14:00 - 16:00">14-16</th>
+                                <th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 16:00 - 18:00">16-18</th>
+                                <th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 18:00 - 20:00">18-20</th>
+                                <th class="p-2.5 text-center th-day-total min-w-[85px]">DAY TOTAL</th>
+
+                                <!-- Total Grand Column -->
+                                <th class="p-2.5 text-center th-grand-total min-w-[95px]">GRAND TOTAL</th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-[var(--border-subtle)]" id="matrixTableBody">
+                            <tr>
+                                <td colspan="17" class="p-6 text-center oqc-text-secondary">Loading scanout rate matrix data...</td>
+                            </tr>
+                        </tbody>
+
+                        <tfoot id="matrixTableFoot">
+                            <!-- Rendered by JS -->
+                        </tfoot>
+                    </table>
+                </div>
+            </main>
+
+            <!-- BOTTOM SECTION: HOURLY TREND ANALYTICS CHART -->
+            <div class="oqc-card-surface p-4 mb-6">
+                <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-[var(--border-subtle)]">
+                    <div>
+                        <h3 class="text-sm font-bold oqc-text-primary flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span>
+                            HOURLY SCANOUT OUTPUT &amp; UPH SPEED TREND
+                        </h3>
+                        <p class="text-[11px] oqc-text-secondary">Night vs Day Shift Output (PCS) with Hourly UPH Speed Trend across 12 Time Slots</p>
+                    </div>
+                </div>
+                <div class="h-64 w-full">
+                    <canvas id="productionTrendChart"></canvas>
                 </div>
             </div>
-
-            <!-- Scrollable High Density Matrix -->
-            <div class="overflow-x-auto overflow-y-max max-h-[620px] relative">
-                <table class="w-full text-left border-collapse text-xs font-mono" id="matrixMainTable">
-                    <thead>
-                        <tr class="sticky-header text-slate-300 uppercase tracking-wider text-[11px] border-b border-slate-700">
-                            <th class="p-3 sticky-header-col-1 w-[110px] min-w-[110px] bg-slate-900 border-r border-slate-800">LINE</th>
-                            <th class="p-3 sticky-header-col-2 w-[140px] min-w-[140px] bg-slate-900 border-r border-slate-700">MODEL SUFFIX</th>
-                            
-                            <!-- Night Shift Headers (6 Slots: 20:00 - 08:00) -->
-                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 20:00 - 22:00">20-22</th>
-                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 22:00 - 00:00">22-00</th>
-                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 00:00 - 02:00">00-02</th>
-                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 02:00 - 04:00">02-04</th>
-                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 04:00 - 06:00">04-06</th>
-                            <th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 06:00 - 08:00">06-08</th>
-                            <th class="p-2.5 text-center bg-indigo-900/90 text-indigo-200 font-bold border-r border-indigo-700 min-w-[85px]">NIGHT TOTAL</th>
-
-                            <!-- Day Shift Headers (6 Slots: 08:00 - 20:00) -->
-                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 08:00 - 10:00">08-10</th>
-                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 10:00 - 12:00">10-12</th>
-                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 12:00 - 14:00">12-14</th>
-                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 14:00 - 16:00">14-16</th>
-                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 16:00 - 18:00">16-18</th>
-                            <th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 18:00 - 20:00">18-20</th>
-                            <th class="p-2.5 text-center bg-cyan-950/90 text-cyan-200 font-bold border-r border-cyan-800 min-w-[85px]">DAY TOTAL</th>
-
-                            <!-- Total Grand Column -->
-                            <th class="p-2.5 text-center bg-slate-950 text-amber-400 font-bold min-w-[95px]">GRAND TOTAL</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="divide-y divide-slate-800 text-slate-200" id="matrixTableBody">
-                        <tr>
-                            <td colspan="17" class="p-6 text-center text-slate-400">Loading scanout rate matrix data...</td>
-                        </tr>
-                    </tbody>
-
-                    <tfoot id="matrixTableFoot">
-                        <!-- Rendered by JS -->
-                    </tfoot>
-                </table>
-            </div>
-        </main>
-
-        <!-- BOTTOM SECTION: HOURLY TREND ANALYTICS CHART -->
-        <div class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-lg mb-6">
-            <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-800">
-                <div>
-                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
-                        HOURLY SCANOUT OUTPUT &amp; UPH SPEED TREND
-                    </h3>
-                    <p class="text-[11px] text-slate-400">Night vs Day Shift Output (PCS) with Hourly UPH Speed Trend across 12 Time Slots</p>
-                </div>
-            </div>
-            <div class="h-64 w-full">
-                <canvas id="productionTrendChart"></canvas>
-            </div>
-        </div>
         </div>
     </main>
 
@@ -245,7 +250,6 @@
         let currentMode = 'QTY';
         let currentScanoutData = null;
         let trendChartInstance = null;
-        let overageChartInstance = null;
 
         document.addEventListener("DOMContentLoaded", function () {
             const todayStr = new Date().toISOString().split('T')[0];
@@ -253,6 +257,19 @@
 
             document.getElementById('workDate').addEventListener('change', fetchScanoutData);
             document.getElementById('shiftFilter').addEventListener('change', applyShiftFilter);
+
+            // Observe data-theme changes to automatically re-render Matrix & Charts
+            const themeObserver = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.attributeName === 'data-theme') {
+                        if (currentScanoutData) {
+                            renderMatrixTable(currentScanoutData);
+                            renderCharts(currentScanoutData.trend);
+                        }
+                    }
+                });
+            });
+            themeObserver.observe(document.documentElement, { attributes: ['data-theme'] });
 
             fetchScanoutData();
         });
@@ -350,7 +367,7 @@
             } catch (err) {
                 console.error(err);
                 document.getElementById('matrixTableBody').innerHTML = `
-                    <tr><td colspan="17" class="p-6 text-center text-rose-400">Error loading scanout data. Please try again.</td></tr>
+                    <tr><td colspan="17" class="p-6 text-center text-rose-500 font-semibold">Error loading scanout data. Please try again.</td></tr>
                 `;
             } finally {
                 finishLoadingProgress();
@@ -361,17 +378,6 @@
             if (!summary) return;
             const totalQtyEl = document.getElementById('kpiTotalQty');
             if (totalQtyEl) totalQtyEl.innerText = summary.totalQty.toLocaleString() + " PCS";
-            
-            const overEl = document.getElementById('kpiTotalOverage');
-            if (overEl) {
-                if (summary.totalOverageQty >= 0) {
-                    overEl.innerText = "+" + summary.totalOverageQty.toLocaleString() + " PCS";
-                    overEl.className = "px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300";
-                } else {
-                    overEl.innerText = summary.totalOverageQty.toLocaleString() + " PCS";
-                    overEl.className = "px-2 py-0.5 rounded font-bold bg-rose-500/20 text-rose-300";
-                }
-            }
 
             const avgUphEl = document.getElementById('kpiAvgUph');
             if (avgUphEl) avgUphEl.innerText = summary.avgUph.toLocaleString() + " UPH";
@@ -387,16 +393,18 @@
             const btnUph = document.getElementById('btnModeUPH');
             const title = document.getElementById('matrixTableTitle');
 
-            [btnQty, btnUph].forEach(b => {
-                if (b) b.className = "px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition flex items-center gap-1.5 border border-slate-700";
-            });
+            if (btnQty) btnQty.className = mode === 'QTY' 
+                ? "px-3 py-1.5 bg-cyan-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow"
+                : "px-3 py-1.5 oqc-input hover:bg-slate-700/20 text-xs font-bold rounded-lg transition flex items-center gap-1.5";
 
-            if (mode === 'QTY') {
-                btnQty.className = "px-3 py-1.5 bg-cyan-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow";
-                title.innerText = "PRODUCTION MATRIX — OUTPUT QUANTITY (PCS)";
-            } else if (mode === 'UPH') {
-                btnUph.className = "px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow";
-                title.innerText = "PRODUCTION MATRIX — HOURLY UPH SPEED RATE (PCS/HOUR)";
+            if (btnUph) btnUph.className = mode === 'UPH' 
+                ? "px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow"
+                : "px-3 py-1.5 oqc-input hover:bg-slate-700/20 text-xs font-bold rounded-lg transition flex items-center gap-1.5";
+
+            if (title) {
+                title.innerText = mode === 'QTY' 
+                    ? "PRODUCTION MATRIX — OUTPUT QUANTITY (PCS)" 
+                    : "PRODUCTION MATRIX — HOURLY UPH SPEED RATE (PCS/HOUR)";
             }
 
             if (currentScanoutData) {
@@ -417,38 +425,38 @@
             const shiftVal = document.getElementById('shiftFilter')?.value || 'ALL';
 
             if (!data.rows || data.rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="17" class="p-6 text-center text-slate-400">No scanout records available for the selected date.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="17" class="p-6 text-center oqc-text-secondary">No scanout records available for the selected date.</td></tr>`;
                 tfoot.innerHTML = '';
                 return;
             }
 
             // Render Dynamic Header based on shift filter
-            let theadHtml = `<tr class="sticky-header text-slate-300 uppercase tracking-wider text-[11px] border-b border-slate-700">`;
-            theadHtml += `<th class="p-3 sticky-header-col-1 w-[110px] min-w-[110px] bg-slate-900 border-r border-slate-800">LINE</th>`;
-            theadHtml += `<th class="p-3 sticky-header-col-2 w-[140px] min-w-[140px] bg-slate-900 border-r border-slate-700">MODEL SUFFIX</th>`;
+            let theadHtml = `<tr class="sticky-header uppercase tracking-wider text-[11px] border-b border-[var(--border-subtle)]">`;
+            theadHtml += `<th class="p-3 sticky-header-col-1 w-[110px] min-w-[110px] border-r border-[var(--border-subtle)]">LINE</th>`;
+            theadHtml += `<th class="p-3 sticky-header-col-2 w-[140px] min-w-[140px] border-r border-[var(--border-subtle)]">MODEL SUFFIX</th>`;
 
             if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
-                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 20:00 - 22:00">20-22</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 22:00 - 00:00">22-00</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 00:00 - 02:00">00-02</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 02:00 - 04:00">02-04</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 04:00 - 06:00">04-06</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-indigo-950/70 border-r border-indigo-900/50 min-w-[72px]" title="Night Shift: 06:00 - 08:00">06-08</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-indigo-900/90 text-indigo-200 font-bold border-r border-indigo-700 min-w-[85px]">NIGHT TOTAL</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 20:00 - 22:00">20-22</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 22:00 - 00:00">22-00</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 00:00 - 02:00">00-02</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 02:00 - 04:00">02-04</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 04:00 - 06:00">04-06</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-night-slot min-w-[72px]" title="Night Shift: 06:00 - 08:00">06-08</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-night-total min-w-[85px]">NIGHT TOTAL</th>`;
             }
 
             if (shiftVal === 'ALL' || shiftVal === 'DAY') {
-                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 08:00 - 10:00">08-10</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 10:00 - 12:00">10-12</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 12:00 - 14:00">12-14</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 14:00 - 16:00">14-16</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 16:00 - 18:00">16-18</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-slate-800/90 border-r border-slate-700 min-w-[72px]" title="Day Shift: 18:00 - 20:00">18-20</th>`;
-                theadHtml += `<th class="p-2.5 text-center bg-cyan-950/90 text-cyan-200 font-bold border-r border-cyan-800 min-w-[85px]">DAY TOTAL</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 08:00 - 10:00">08-10</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 10:00 - 12:00">10-12</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 12:00 - 14:00">12-14</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 14:00 - 16:00">14-16</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 16:00 - 18:00">16-18</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-day-slot min-w-[72px]" title="Day Shift: 18:00 - 20:00">18-20</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-day-total min-w-[85px]">DAY TOTAL</th>`;
             }
 
             if (shiftVal === 'ALL') {
-                theadHtml += `<th class="p-2.5 text-center bg-slate-950 text-amber-400 font-bold min-w-[95px]">GRAND TOTAL</th>`;
+                theadHtml += `<th class="p-2.5 text-center th-grand-total min-w-[95px]">GRAND TOTAL</th>`;
             }
             theadHtml += `</tr>`;
 
@@ -468,28 +476,28 @@
                 const rows = groupedByLine[lineKey];
 
                 rows.forEach(r => {
-                    html += `<tr class="hover:bg-slate-800/50 transition">`;
-                    html += `<td class="p-2.5 font-bold text-cyan-400 sticky-col-1 border-r border-slate-800">${escapeHtml(r.line)}</td>`;
-                    html += `<td class="p-2.5 font-semibold text-slate-100 sticky-col-2 border-r border-slate-700">${escapeHtml(r.modelSuffix)}</td>`;
+                    html += `<tr>`;
+                    html += `<td class="p-2.5 font-bold text-cyan-500 sticky-col-1 border-r border-[var(--border-subtle)]">${escapeHtml(r.line)}</td>`;
+                    html += `<td class="p-2.5 font-semibold oqc-text-primary sticky-col-2 border-r border-[var(--border-subtle)]">${escapeHtml(r.modelSuffix)}</td>`;
 
                     if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
                         for (let i = 0; i < 6; i++) {
                             const cell = r.slots[i];
-                            html += `<td class="p-2.5 text-center ${getCellStyle(cell)} border-r border-slate-800">${formatCellValue(cell)}</td>`;
+                            html += `<td class="p-2.5 text-center ${getCellStyle(cell)} border-r border-[var(--border-subtle)]">${formatCellValue(cell)}</td>`;
                         }
-                        html += `<td class="p-2.5 text-center font-bold bg-indigo-950/70 text-indigo-300 border-r border-indigo-700/80">${formatCellValue(r.nightTotal)}</td>`;
+                        html += `<td class="p-2.5 text-center th-night-total border-r border-[var(--border-strong)]">${formatCellValue(r.nightTotal)}</td>`;
                     }
 
                     if (shiftVal === 'ALL' || shiftVal === 'DAY') {
                         for (let i = 6; i < 12; i++) {
                             const cell = r.slots[i];
-                            html += `<td class="p-2.5 text-center ${getCellStyle(cell)} border-r border-slate-800">${formatCellValue(cell)}</td>`;
+                            html += `<td class="p-2.5 text-center ${getCellStyle(cell)} border-r border-[var(--border-subtle)]">${formatCellValue(cell)}</td>`;
                         }
-                        html += `<td class="p-2.5 text-center font-bold bg-cyan-950/70 text-cyan-300 border-r border-cyan-700/80">${formatCellValue(r.dayTotal)}</td>`;
+                        html += `<td class="p-2.5 text-center th-day-total border-r border-[var(--border-strong)]">${formatCellValue(r.dayTotal)}</td>`;
                     }
 
                     if (shiftVal === 'ALL') {
-                        html += `<td class="p-2.5 text-center font-bold bg-slate-950 text-amber-300">${formatCellValue(r.grandTotal)}</td>`;
+                        html += `<td class="p-2.5 text-center th-grand-total">${formatCellValue(r.grandTotal)}</td>`;
                     }
                     html += `</tr>`;
                 });
@@ -497,26 +505,26 @@
                 // Add Highlighted Subtotal Row
                 if (rows.length > 0) {
                     const lineSubtotal = calculateLineSubtotal(rows);
-                    html += `<tr class="bg-indigo-950/90 font-bold border-t-2 border-b-2 border-indigo-500/50 text-slate-100 shadow-md">`;
-                    html += `<td class="p-2.5 text-amber-300 sticky-col-1 border-r border-indigo-800 bg-indigo-950 font-extrabold uppercase tracking-wider">SUBTOTAL ${escapeHtml(lineKey)}</td>`;
-                    html += `<td class="p-2.5 text-cyan-300 sticky-col-2 border-r border-indigo-800 bg-indigo-950 font-semibold">${rows.length} Model(s)</td>`;
+                    html += `<tr class="row-subtotal">`;
+                    html += `<td class="p-2.5 text-amber-500 sticky-col-1 border-r border-[var(--border-subtle)] font-extrabold uppercase tracking-wider">SUBTOTAL ${escapeHtml(lineKey)}</td>`;
+                    html += `<td class="p-2.5 text-cyan-500 sticky-col-2 border-r border-[var(--border-subtle)] font-semibold">${rows.length} Model(s)</td>`;
 
                     if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
                         for (let i = 0; i < 6; i++) {
-                            html += `<td class="p-2.5 text-center border-r border-indigo-900/60 bg-indigo-950/60 text-slate-100 font-bold">${formatCellValue(lineSubtotal.slots[i])}</td>`;
+                            html += `<td class="p-2.5 text-center border-r border-[var(--border-subtle)] font-bold">${formatCellValue(lineSubtotal.slots[i])}</td>`;
                         }
-                        html += `<td class="p-2.5 text-center text-indigo-200 bg-indigo-900/90 border-r border-indigo-700 font-extrabold text-sm">${formatCellValue(lineSubtotal.nightTotal)}</td>`;
+                        html += `<td class="p-2.5 text-center th-night-total border-r border-[var(--border-strong)] font-extrabold text-sm">${formatCellValue(lineSubtotal.nightTotal)}</td>`;
                     }
 
                     if (shiftVal === 'ALL' || shiftVal === 'DAY') {
                         for (let i = 6; i < 12; i++) {
-                            html += `<td class="p-2.5 text-center border-r border-indigo-900/60 bg-indigo-950/60 text-slate-100 font-bold">${formatCellValue(lineSubtotal.slots[i])}</td>`;
+                            html += `<td class="p-2.5 text-center border-r border-[var(--border-subtle)] font-bold">${formatCellValue(lineSubtotal.slots[i])}</td>`;
                         }
-                        html += `<td class="p-2.5 text-center text-cyan-200 bg-cyan-900/90 border-r border-indigo-700 font-extrabold text-sm">${formatCellValue(lineSubtotal.dayTotal)}</td>`;
+                        html += `<td class="p-2.5 text-center th-day-total border-r border-[var(--border-strong)] font-extrabold text-sm">${formatCellValue(lineSubtotal.dayTotal)}</td>`;
                     }
 
                     if (shiftVal === 'ALL') {
-                        html += `<td class="p-2.5 text-center text-amber-400 bg-slate-950 font-black text-sm">${formatCellValue(lineSubtotal.grandTotal)}</td>`;
+                        html += `<td class="p-2.5 text-center th-grand-total font-black text-sm">${formatCellValue(lineSubtotal.grandTotal)}</td>`;
                     }
                     html += `</tr>`;
                 }
@@ -526,26 +534,26 @@
 
             // Grand Total Footer Row
             const factoryGrand = calculateFactoryGrandTotal(data.rows);
-            let footHtml = `<tr class="bg-slate-950 text-white font-bold border-t-2 border-slate-600 text-xs">`;
-            footHtml += `<td class="p-3 text-amber-400 sticky-col-1 border-r border-slate-800 bg-slate-950">FACTORY GRAND TOTAL</td>`;
-            footHtml += `<td class="p-3 text-slate-300 sticky-col-2 border-r border-slate-700 bg-slate-950">ALL LINES</td>`;
+            let footHtml = `<tr class="row-grand-total text-xs">`;
+            footHtml += `<td class="p-3 text-amber-500 sticky-col-1 border-r border-[var(--border-subtle)]">FACTORY GRAND TOTAL</td>`;
+            footHtml += `<td class="p-3 oqc-text-secondary sticky-col-2 border-r border-[var(--border-subtle)]">ALL LINES</td>`;
 
             if (shiftVal === 'ALL' || shiftVal === 'NIGHT') {
                 for (let i = 0; i < 6; i++) {
-                    footHtml += `<td class="p-3 text-center border-r border-slate-800 bg-indigo-950/50 text-indigo-200">${formatCellValue(factoryGrand.slots[i])}</td>`;
+                    footHtml += `<td class="p-3 text-center border-r border-[var(--border-subtle)] th-night-slot">${formatCellValue(factoryGrand.slots[i])}</td>`;
                 }
-                footHtml += `<td class="p-3 text-center text-xl text-indigo-300 bg-indigo-950 border-r border-indigo-700">${formatCellValue(factoryGrand.nightTotal)}</td>`;
+                footHtml += `<td class="p-3 text-center text-xl th-night-total border-r border-[var(--border-strong)]">${formatCellValue(factoryGrand.nightTotal)}</td>`;
             }
 
             if (shiftVal === 'ALL' || shiftVal === 'DAY') {
                 for (let i = 6; i < 12; i++) {
-                    footHtml += `<td class="p-3 text-center border-r border-slate-800 bg-cyan-950/50 text-cyan-200">${formatCellValue(factoryGrand.slots[i])}</td>`;
+                    footHtml += `<td class="p-3 text-center border-r border-[var(--border-subtle)] th-day-slot">${formatCellValue(factoryGrand.slots[i])}</td>`;
                 }
-                footHtml += `<td class="p-3 text-center text-xl text-cyan-300 bg-cyan-950 border-r border-cyan-700">${formatCellValue(factoryGrand.dayTotal)}</td>`;
+                footHtml += `<td class="p-3 text-center text-xl th-day-total border-r border-[var(--border-strong)]">${formatCellValue(factoryGrand.dayTotal)}</td>`;
             }
 
             if (shiftVal === 'ALL') {
-                footHtml += `<td class="p-3 text-center text-2xl text-amber-400 font-extrabold bg-slate-950">${formatCellValue(factoryGrand.grandTotal)}</td>`;
+                footHtml += `<td class="p-3 text-center text-2xl th-grand-total font-extrabold">${formatCellValue(factoryGrand.grandTotal)}</td>`;
             }
             footHtml += `</tr>`;
 
@@ -557,12 +565,8 @@
 
             if (currentMode === 'QTY') {
                 return cell.qty.toLocaleString();
-            } else if (currentMode === 'OVERAGE') {
-                return cell.overage >= 0 ? `+${cell.overage.toLocaleString()}` : cell.overage.toLocaleString();
             } else if (currentMode === 'UPH') {
                 return cell.uph.toLocaleString();
-            } else if (currentMode === 'EFF') {
-                return cell.efficiencyPct.toFixed(1) + "%";
             }
             return cell.qty.toLocaleString();
         }
@@ -570,13 +574,9 @@
         function getCellStyle(cell) {
             if (!cell || cell.qty === 0) return "cell-empty";
 
-            if (currentMode === 'OVERAGE') {
-                return cell.overage >= 0 ? "overage-positive" : "overage-negative";
-            }
-
-            if (cell.qty >= 4000) return "cell-high";
-            if (cell.qty >= 3000) return "cell-mid";
-            if (cell.qty >= 1500) return "cell-low";
+            if (cell.qty >= 1000) return "cell-high";
+            if (cell.qty >= 600) return "cell-mid";
+            if (cell.qty >= 300) return "cell-low";
             return "cell-critical";
         }
 
@@ -595,17 +595,17 @@
 
                 slots.push({
                     qty: slotQty,
-                    overage: slotQty - 3750,
+                    overage: slotQty - 833,
                     uph: Math.round(slotQty / 2),
-                    efficiencyPct: Math.round(slotQty * 100.0 / 3750)
+                    efficiencyPct: Math.round(slotQty * 100.0 / 833)
                 });
             }
 
             return {
                 slots,
-                nightTotal: { qty: nightQty, overage: nightQty - 22500, uph: Math.round(nightQty / 12), efficiencyPct: Math.round(nightQty * 100.0 / 22500) },
-                dayTotal: { qty: dayQty, overage: dayQty - 22500, uph: Math.round(dayQty / 12), efficiencyPct: Math.round(dayQty * 100.0 / 22500) },
-                grandTotal: { qty: nightQty + dayQty, overage: (nightQty + dayQty) - 45000, uph: Math.round((nightQty + dayQty) / 24), efficiencyPct: Math.round((nightQty + dayQty) * 100.0 / 45000) }
+                nightTotal: { qty: nightQty, overage: nightQty - 5000, uph: Math.round(nightQty / 12), efficiencyPct: Math.round(nightQty * 100.0 / 5000) },
+                dayTotal: { qty: dayQty, overage: dayQty - 5000, uph: Math.round(dayQty / 12), efficiencyPct: Math.round(dayQty * 100.0 / 5000) },
+                grandTotal: { qty: nightQty + dayQty, overage: (nightQty + dayQty) - 10000, uph: Math.round((nightQty + dayQty) / 24), efficiencyPct: Math.round((nightQty + dayQty) * 100.0 / 10000) }
             };
         }
 
@@ -616,12 +616,23 @@
         function renderCharts(trendData) {
             if (!trendData) return;
 
+            const theme = document.documentElement.getAttribute('data-theme') || 'light';
+            const isDark = (theme === 'dark');
+
+            const textColor = isDark ? '#94A3B8' : '#5B6472';
+            const gridColor = isDark ? 'rgba(51, 65, 85, 0.3)' : 'rgba(226, 229, 234, 0.8)';
+            const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
+            const tooltipTitle = isDark ? '#F8FAFC' : '#12161C';
+            const tooltipBody = isDark ? '#38BDF8' : '#0B72B9';
+            const tooltipBorder = isDark ? '#334155' : '#C7CCD4';
+            const pointBorder = isDark ? '#FFFFFF' : '#12161C';
+
             const labels = trendData.map(t => t.hourLabel);
             const outputQty = trendData.map(t => t.nightQty > 0 ? t.nightQty : t.dayQty);
             const barColors = trendData.map(t => t.nightQty > 0 ? 'rgba(79, 70, 229, 0.85)' : 'rgba(6, 182, 212, 0.85)');
             const actualUph = trendData.map(t => t.actualUph);
 
-            // Chart: Production Output & UPH Trend (Full Width)
+            // Chart: Production Output & UPH Trend
             const ctx1 = document.getElementById('productionTrendChart').getContext('2d');
             if (trendChartInstance) trendChartInstance.destroy();
 
@@ -643,13 +654,13 @@
                             label: 'Actual UPH Rate',
                             data: actualUph,
                             type: 'line',
-                            borderColor: '#34D399',
-                            backgroundColor: '#34D399',
+                            borderColor: '#10B981',
+                            backgroundColor: '#10B981',
                             borderWidth: 2.5,
                             pointRadius: 4,
                             pointHoverRadius: 6,
                             pointBackgroundColor: '#10B981',
-                            pointBorderColor: '#FFFFFF',
+                            pointBorderColor: pointBorder,
                             pointBorderWidth: 1.5,
                             yAxisID: 'y1',
                             datalabels: {
@@ -657,7 +668,7 @@
                                 align: 'top',
                                 anchor: 'end',
                                 offset: 4,
-                                color: '#34D399',
+                                color: isDark ? '#34D399' : '#059669',
                                 font: {
                                     family: 'JetBrains Mono',
                                     size: 11,
@@ -676,26 +687,26 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#0F172A',
-                            titleColor: '#F8FAFC',
-                            bodyColor: '#38BDF8',
-                            borderColor: '#334155',
+                            backgroundColor: tooltipBg,
+                            titleColor: tooltipTitle,
+                            bodyColor: tooltipBody,
+                            borderColor: tooltipBorder,
                             borderWidth: 1
                         }
                     },
                     scales: {
                         x: {
-                            ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 10 } },
-                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                            ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } },
+                            grid: { color: gridColor }
                         },
                         y: {
                             position: 'left',
-                            ticks: { color: '#94A3B8' },
-                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
                         },
                         y1: {
                             position: 'right',
-                            ticks: { color: '#34D399' },
+                            ticks: { color: isDark ? '#34D399' : '#059669' },
                             grid: { drawOnChartArea: false }
                         }
                     }
@@ -820,5 +831,6 @@
             document.body.removeChild(link);
         }
     </script>
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
 </body>
 </html>

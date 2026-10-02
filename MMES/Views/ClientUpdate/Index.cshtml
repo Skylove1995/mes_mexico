@@ -1,0 +1,365 @@
+@model IEnumerable<MMES.Models.ClientUpdateRelease>
+@{
+    ViewData["Title"] = "Quản Lý Bản Cập Nhật Client App";
+    Layout = null;
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bí Mật Admin - Client App Auto-Update Center - HAENG SUNG</title>
+    <!-- Tailwind CSS v3 via CDN -->
+    <script>
+        (function() {
+            var w = console.warn;
+            console.warn = function() {
+                if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) return;
+                w.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="~/js/tailwind-runtime.js" asp-append-version="true"></script>
+    <link href="~/css/fontawesome/css/all.min.css" rel="stylesheet" asp-append-version="true" />
+    <style>
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+        .dropzone-active {
+            border-color: #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+    </style>
+</head>
+<body class="bg-[#0B0F17] text-slate-100 font-sans antialiased min-h-screen pb-12">
+    
+    <!-- Top Bar Navigation -->
+    <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center gap-4">
+            <a href="/" class="flex items-center gap-3 text-cyan-400 font-bold text-xl hover:text-cyan-300 transition-colors">
+                <div class="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                    <i class="fa-solid fa-shield-halved text-cyan-400"></i>
+                </div>
+                <span>MEX-MES 3.0</span>
+            </a>
+            <span class="text-slate-600">/</span>
+            <span class="text-amber-400 font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-user-lock"></i> Khu Vực Secret Admin: Client Auto-Update
+            </span>
+        </div>
+        <div class="flex items-center gap-3 text-sm text-slate-400">
+            <span class="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/30 text-xs font-semibold">
+                <i class="fa-solid fa-key mr-1"></i> Admin Authorized
+            </span>
+            <a href="/" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors">
+                Quay lại Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+
+        <!-- TempData Notification Alerts -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 flex items-center justify-between shadow-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-circle-check text-xl"></i>
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 flex items-center justify-between shadow-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                    <span>@TempData["ErrorMessage"]</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        }
+
+        <!-- Page Header & Overview -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                    <i class="fa-solid fa-boxes-packing text-cyan-400"></i> Quản Lý Bản Cập Nhật Client App
+                </h1>
+                <p class="text-slate-400 mt-1 text-sm">Upload các gói nâng cấp (.zip, .dll, .exe) cho ứng dụng Client. Phía client luôn tự động tải bản mới nhất qua API cố định.</p>
+            </div>
+            
+            @{
+                var totalReleases = Model?.Count() ?? 0;
+                var latestVer = Model?.FirstOrDefault(r => r.IsActive)?.Version ?? "Chưa có";
+            }
+
+            <div class="flex items-center gap-3">
+                <div class="glass-card px-4 py-2.5 rounded-xl flex items-center gap-3">
+                    <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                        <i class="fa-solid fa-code-branch"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400">Version Mới Nhất Active</div>
+                        <div class="text-lg font-bold text-emerald-400">v@latestVer</div>
+                    </div>
+                </div>
+                <div class="glass-card px-4 py-2.5 rounded-xl flex items-center gap-3">
+                    <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400">Tổng Số Bản Upload</div>
+                        <div class="text-lg font-bold text-white">@totalReleases</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Endpoint Information Box -->
+        <div class="glass-card rounded-2xl p-5 mb-8 border border-slate-800 bg-slate-900/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <div class="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20 text-xl">
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Cấu Hình Link Cố Định Phía Client</h3>
+                    <p class="text-xs text-slate-400 mt-1">Client App gọi 2 API này để kiểm tra & tải file:</p>
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs font-mono">
+                        <span class="px-2.5 py-1 bg-slate-800 text-cyan-300 rounded border border-slate-700">GET /api/app-update/check?currentVersion=1.0.0</span>
+                        <span class="px-2.5 py-1 bg-slate-800 text-emerald-300 rounded border border-slate-700">GET /api/app-update/download/latest</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload New Release Section -->
+        <div class="glass-card rounded-2xl p-6 mb-8 border border-slate-800 shadow-xl">
+            <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i> Upload Gói Cập Nhật Mới (.ZIP / .DLL)
+            </h2>
+
+            <form asp-controller="ClientUpdate" asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                @Html.AntiForgeryToken()
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Số Phiên Bản (Version) <span class="text-rose-400">*</span></label>
+                        <input type="text" name="version" required placeholder="Ví dụ: 1.0.1 hoặc 2.1.0" 
+                               class="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ghi Chú Bản Cập Nhật (Release Notes)</label>
+                        <input type="text" name="releaseNotes" placeholder="Sửa lỗi giao diện, cập nhật file DLL truyền thông SMT..." 
+                               class="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
+                    </div>
+                </div>
+
+                <div id="dropZone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500/50 bg-slate-900/50 rounded-xl p-8 text-center cursor-pointer transition-all">
+                    <input type="file" name="zipFile" id="fileInput" required class="hidden" onchange="handleFileSelect(this.files)" />
+
+                    <div id="dropZoneContent" class="space-y-3">
+                        <div class="w-16 h-16 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto border border-cyan-500/20 text-2xl shadow-inner">
+                            <i class="fa-solid fa-file-zipper"></i>
+                        </div>
+                        <div>
+                            <p class="text-base font-medium text-slate-200">Kéo & thả file gói update (.ZIP) vào đây, hoặc <span class="text-cyan-400 underline cursor-pointer hover:text-cyan-300">Chọn file từ máy tính</span></p>
+                            <p class="text-xs text-slate-500 mt-1">Hỗ trợ các định dạng đóng gói: .ZIP, .RAR, .7Z, .EXE, .DLL</p>
+                        </div>
+                    </div>
+
+                    <!-- File Selected Info -->
+                    <div id="fileSelectedInfo" class="hidden flex items-center justify-between bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+                        <div class="flex items-center gap-3">
+                            <i id="fileIcon" class="fa-solid fa-file-zipper text-cyan-400 text-2xl"></i>
+                            <div class="text-left">
+                                <p id="fileName" class="font-medium text-slate-200 text-sm truncate max-w-xs md:max-w-md"></p>
+                                <p id="fileSize" class="text-xs text-slate-400"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button type="button" onclick="cancelFileSelect()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded-lg transition-colors">
+                                Hủy chọn
+                            </button>
+                            <button type="submit" class="px-5 py-2 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg shadow-lg shadow-cyan-600/30 transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-upload"></i> Phát Hành Bản Cập Nhật
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Release List Table Section -->
+        <div class="glass-card rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+            <div class="p-5 bg-slate-900/60 border-b border-slate-800 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-amber-400"></i> Danh Sách Lịch Sử Phát Hành Phiên Bản
+                </h2>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-800">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold">Version</th>
+                            <th class="px-6 py-4 font-semibold">Tên File / Size</th>
+                            <th class="px-6 py-4 font-semibold">Mã Hash (SHA256)</th>
+                            <th class="px-6 py-4 font-semibold">Trạng Thái</th>
+                            <th class="px-6 py-4 font-semibold">Thời Gian</th>
+                            <th class="px-6 py-4 font-semibold text-right">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60">
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                                    <i class="fa-solid fa-box-open text-4xl mb-3 block opacity-40"></i>
+                                    Chưa có bản cập nhật nào được upload.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                string sizeStr = item.FileSize switch {
+                                    >= 1048576 => $"{item.FileSize / 1048576.0:F2} MB",
+                                    >= 1024 => $"{item.FileSize / 1024.0:F2} KB",
+                                    _ => $"{item.FileSize} B"
+                                };
+
+                                <tr class="hover:bg-slate-800/40 transition-colors">
+                                    <td class="px-6 py-4 font-bold text-cyan-400 whitespace-nowrap">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-sm">v@item.Version</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-200">
+                                        <div class="font-medium text-sm">@item.OriginalFileName</div>
+                                        <div class="text-xs text-slate-400 mt-0.5">@sizeStr • By: @(item.UploadedBy ?? "Admin")</div>
+                                        @if (!string.IsNullOrWhiteSpace(item.ReleaseNotes))
+                                        {
+                                            <div class="text-xs text-slate-400 italic mt-1 bg-slate-900/40 p-1.5 rounded border border-slate-800">"@item.ReleaseNotes"</div>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 font-mono text-xs text-slate-400">
+                                        <span class="truncate block max-w-[160px]" title="@item.FileHashSha256">@item.FileHashSha256</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit">
+                                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active (Khả dụng)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="px-2.5 py-1 bg-slate-800 text-slate-400 border border-slate-700 rounded-full text-xs font-medium w-fit">
+                                                Disabled (Tắt)
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-400 text-xs whitespace-nowrap">
+                                        @item.UploadedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <form asp-controller="ClientUpdate" asp-action="ToggleActive" asp-route-id="@item.Id" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition-colors">
+                                                    @(item.IsActive ? "Tắt" : "Bật")
+                                                </button>
+                                            </form>
+                                            <a asp-controller="Api/AppUpdate" asp-action="DownloadByVersion" asp-route-version="@item.Version" 
+                                               class="px-2.5 py-1 bg-cyan-600/20 text-cyan-300 hover:bg-cyan-600 hover:text-white rounded-lg text-xs font-medium transition-all">
+                                                <i class="fa-solid fa-download"></i> Tải
+                                            </a>
+                                            <form asp-controller="ClientUpdate" asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản cập nhật v@item.Version này không?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors" title="Xóa">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const dropZoneContent = document.getElementById('dropZoneContent');
+        const fileSelectedInfo = document.getElementById('fileSelectedInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.closest('input')) return;
+            fileInput.click();
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dropzone-active'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dropzone-active'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files);
+            }
+        });
+
+        function handleFileSelect(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            fileName.textContent = file.name;
+            
+            let size = file.size;
+            let sizeFormatted = size >= 1048576 
+                ? (size / 1048576).toFixed(2) + ' MB' 
+                : (size / 1024).toFixed(2) + ' KB';
+            fileSize.textContent = sizeFormatted;
+
+            dropZoneContent.classList.add('hidden');
+            fileSelectedInfo.classList.remove('hidden');
+        }
+
+        function cancelFileSelect() {
+            fileInput.value = '';
+            dropZoneContent.classList.remove('hidden');
+            fileSelectedInfo.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

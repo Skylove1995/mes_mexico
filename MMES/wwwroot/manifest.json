@@ -1,0 +1,18 @@
+{
+  "name": "MEX-MES 3.0 System",
+  "short_name": "MEX-MES",
+  "description": "Manufacturing Execution System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/images/Logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

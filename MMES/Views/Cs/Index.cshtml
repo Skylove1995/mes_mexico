@@ -1,0 +1,187 @@
+@{
+    Layout = null;
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Service Division - HAENG SUNG MEX-MES 3.0</title>
+    <script>
+        (function () {
+            var hour = new Date().getHours();
+            document.documentElement.setAttribute('data-theme', (hour >= 6 && hour < 18) ? 'light' : 'dark');
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dashboard-page">
+    <partial name="_DashboardHeader" />
+
+    <!-- Top Operational Plant Status Bar -->
+    <div class="plant-status-bar">
+        <div class="status-indicator">
+            <span class="pulse-dot"></span>
+            <span class="status-text">DIVISION OPERATIONAL &bull; CUSTOMER SERVICE &amp; DOCUMENTATION MATRIX</span>
+        </div>
+        <div class="status-metrics">
+            <div class="metric-item">
+                <span class="metric-lbl">DIVISION:</span>
+                <span class="metric-val">CUSTOMER SERVICE (CS)</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">DMS ENGINE:</span>
+                <span class="metric-val highlight-gold">ONLINE &bull; LIBREOFFICE PREVIEW</span>
+            </div>
+            <div class="metric-divider">|</div>
+            <div class="metric-item">
+                <span class="metric-lbl">DOCUMENT CONTROL:</span>
+                <span class="metric-val highlight-cyan">ACTIVE REVISION SYSTEM</span>
+            </div>
+        </div>
+    </div>
+
+    <main id="top" class="dashboard-main">
+        <!-- Hero Industrial Command Banner -->
+        <section class="enterprise-hero">
+            <div class="hero-content">
+                <div class="hero-eyebrow">
+                    <span class="eyebrow-badge">DEPARTMENT MODULES</span>
+                    <span class="eyebrow-sub">CUSTOMER SERVICE DIVISION</span>
+                </div>
+                <h1 class="hero-title">Customer Service &amp; Document Control Center</h1>
+                <p class="hero-desc">
+                    Centralized factory document management system, Work Instruction (WI) operation guidelines, 
+                    Engineering Change Notices (ECN), customer specifications, and revision history archives.
+                </p>
+                <div class="hero-motto">
+                    &ldquo;Precise document version control and seamless customer specification management for zero-error factory operation.&rdquo;
+                </div>
+            </div>
+
+            <div class="hero-fact-grid">
+                <div class="fact-card highlight">
+                    <div class="fact-num">DMS SYSTEM</div>
+                    <div class="fact-lbl">VERSION CONTROL</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">100%</div>
+                    <div class="fact-lbl">ONLINE WI PREVIEW</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">24/7</div>
+                    <div class="fact-lbl">FACTORY ACCESSIBILITY</div>
+                </div>
+                <div class="fact-card">
+                    <div class="fact-num">ECN / WI</div>
+                    <div class="fact-lbl">MASTER DATA LINK</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CS Executable Modules Grid -->
+        <section class="dept-section">
+            <div class="section-header">
+                <div class="header-left">
+                    <span class="section-tag">CUSTOMER SERVICE MODULES</span>
+                    <h2 class="section-title">Available Applications</h2>
+                </div>
+                <div class="header-right">
+                    <span class="dept-count">Active Modules: <strong>1 / 3</strong></span>
+                </div>
+            </div>
+
+            <div class="dept-grid">
+                <!-- DMS Documents Module (Active) -->
+                <div class="dept-card is-live is-featured" id="dept-cs-dms-documents">
+                    <div class="card-image-wrap">
+                        <img src="~/images/CS.jpeg" alt="Factory DMS Documents" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">DMS</div>
+                            <span class="badge live">
+                                <span class="badge-dot"></span>
+                                SYSTEM READY
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">DMS Documents</div>
+                        <div class="dept-desc">Factory Document Management System, ECN revision tracking, process WI guidelines, and master data settings.</div>
+
+                        <div class="card-footer">
+                            <a asp-controller="Document" asp-action="Index" class="dept-action-btn primary">
+                                <span>ENTER MODULE</span>
+                                <svg class="arrow-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                    <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.751.751 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L11.44 8.5H2.75a.75.75 0 0 1 0-1.5h8.69L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engineering Change Notice (Coming Soon) -->
+                <div class="dept-card" id="dept-cs-ecn">
+                    <div class="card-image-wrap">
+                        <img src="~/images/CS.jpeg" alt="Engineering Change Notice" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">ECN</div>
+                            <span class="badge soon">
+                                <span class="badge-dot"></span>
+                                COMING SOON
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">Engineering Change Notice (ECN)</div>
+                        <div class="dept-desc">Customer specification changes, engineering approval workflows, and model revision sign-offs.</div>
+
+                        <div class="card-footer">
+                            <button class="dept-action-btn disabled" disabled>
+                                <span>INACTIVE</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Management Portal (Active) -->
+                <div class="dept-card is-live is-featured" id="dept-cs-audit-management">
+                    <div class="card-image-wrap">
+                        <img src="~/images/CS.jpeg" alt="Audit Management Portal" loading="lazy">
+                        <div class="card-image-overlay"></div>
+                        <div class="card-top-bar">
+                            <div class="dept-monogram">AUDIT</div>
+                            <span class="badge live">
+                                <span class="badge-dot"></span>
+                                SYSTEM READY
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="dept-code">Audit Management System</div>
+                        <div class="dept-desc">Audit schedule planning calendar, conduct checksheet scoring (LPA/ESD/5S), auditor issue CAPA matrix, and summary report dashboard.</div>
+
+                        <div class="card-footer">
+                            <a asp-controller="Cs" asp-action="AuditManagement" class="dept-action-btn primary">
+                                <span>ENTER MODULE</span>
+                                <svg class="arrow-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                    <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.751.751 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L11.44 8.5H2.75a.75.75 0 0 1 0-1.5h8.69L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="~/js/theme-clock.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Spline aspect ratio test</title>
+<script type="module" src="/js/spline-viewer.js"></script>
+<style>
+  body { margin:0; background:#222; color:#fff; font-family:sans-serif; }
+  h2 { text-align:center; padding:8px; margin:0; background:#111; }
+  .row { display:flex; flex-wrap:wrap; gap:16px; padding:16px; }
+  .box { border:2px solid #0ff; }
+  .square { width:400px; height:400px; }
+  .wide { width:900px; height:300px; }
+  .tall { width:300px; height:900px; }
+  spline-viewer { width:100%; height:100%; display:block; }
+</style>
+</head>
+<body>
+  <h2>So sanh khung hinh: vuong vs. chu nhat rong vs. chu nhat cao</h2>
+  <div class="row">
+    <div>
+      <p>Square 400x400</p>
+      <div class="box square"><spline-viewer url="/assets/r4xbot.splinecode"></spline-viewer></div>
+    </div>
+    <div>
+      <p>Wide 900x300</p>
+      <div class="box wide"><spline-viewer url="/assets/r4xbot.splinecode"></spline-viewer></div>
+    </div>
+    <div>
+      <p>Tall 300x900</p>
+      <div class="box tall"><spline-viewer url="/assets/r4xbot.splinecode"></spline-viewer></div>
+    </div>
+  </div>
+</body>
+</html>

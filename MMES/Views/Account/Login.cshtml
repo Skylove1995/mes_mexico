@@ -10,30 +10,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In - MMES</title>
-    <link rel="stylesheet" href="~/css/account.css" />
+    <link rel="manifest" href="~/manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MEX-MES 3.0" />
+    <link rel="apple-touch-icon" href="~/images/Logo.png" />
+    <link rel="stylesheet" href="~/css/account.css" asp-append-version="true" />
 </head>
 <body class="account-page">
-    <div class="stage">
-        <section class="panel-form">
-            <div class="brand-row">
-                <img src="~/images/Logo.png" alt="HAENG SUNG logo">
-                <div class="brand-text">
-                    <span class="brand-name">HAENG SUNG</span>
-                    <span class="brand-sub">MMES · REV 3.0</span>
-                </div>
+    <div class="auth-container">
+        <section class="auth-card">
+            <div class="auth-header">
+                <img src="~/images/Logo.png" alt="MEX-MES Logo" class="auth-logo" onerror="this.style.display='none'" />
+                <h1 class="auth-title">MEX-MES 3.0</h1>
+                <p class="auth-subtitle">Manufacturing Execution System</p>
             </div>
 
-            <div class="heading">
-                <h1 id="heading-title">@(activeTab == "register" ? "Create a new account" : "Sign in to your account")</h1>
-                <p id="heading-sub">@(activeTab == "register" ? "Register for MMES using your employee ID and department." : "Enter your employee ID and password to access MMES.")</p>
-            </div>
-
-            <div class="tabs" role="tablist" aria-label="Switch between sign in and register">
-                <button type="button" role="tab" id="tab-login" aria-selected="@(activeTab == "login" ? "true" : "false")" aria-controls="form-login">Sign In</button>
-                <button type="button" role="tab" id="tab-register" aria-selected="@(activeTab == "register" ? "true" : "false")" aria-controls="form-register">Register</button>
-            </div>
-
-            <form class="account-form" id="form-login" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" aria-labelledby="tab-login" hidden="@(activeTab != "login" ? "hidden" : null)">
+            <form class="account-form @(activeTab == "login" ? "is-active" : "")" id="form-login" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" aria-label="Sign in form">
                 <div class="field">
                     <label for="login-id">Employee ID</label>
                     <div class="input-wrap">
@@ -55,13 +49,13 @@
                     <label class="checkbox">
                         <input type="checkbox" name="RememberMe" value="true" checked="@(Model.Login.RememberMe ? "checked" : null)">
                         <input type="hidden" name="RememberMe" value="false">
-                        Remember me
+                        <span>Remember me</span>
                     </label>
                     <a class="link" href="#">Forgot password?</a>
                 </div>
 
                 <button class="submit" type="submit">Sign In</button>
-                <p class="form-note @(!ViewContext.ViewData.ModelState.IsValid && activeTab == "login" ? "error" : "")">
+                <p class="form-note @((!ViewContext.ViewData.ModelState.IsValid && activeTab == "login") || !string.IsNullOrEmpty(registerSuccess) ? "has-message" : "") @(!ViewContext.ViewData.ModelState.IsValid && activeTab == "login" ? "error" : "")">
                     @if (!ViewContext.ViewData.ModelState.IsValid && activeTab == "login")
                     {
                         @string.Join(" ", ViewContext.ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))
@@ -73,7 +67,7 @@
                 </p>
             </form>
 
-            <form class="account-form" id="form-register" asp-controller="Account" asp-action="Register" method="post" aria-labelledby="tab-register" hidden="@(activeTab != "register" ? "hidden" : null)">
+            <form class="account-form @(activeTab == "register" ? "is-active" : "")" id="form-register" asp-controller="Account" asp-action="Register" method="post" aria-label="Register form">
                 <div class="field">
                     <label for="reg-name">Full Name</label>
                     <div class="input-wrap">
@@ -112,6 +106,10 @@
                     <div class="input-wrap">
                         <input id="reg-email" name="Email" type="email" placeholder="nombre.apellido@haengsung.com" value="@Model.Register.Email" autocomplete="email" required>
                     </div>
+                    @if (ViewContext.ViewData.ModelState["Email"]?.Errors.Count > 0)
+                    {
+                        <span class="field-error">@ViewContext.ViewData.ModelState["Email"]!.Errors.First().ErrorMessage</span>
+                    }
                 </div>
 
                 <div class="field-row">
@@ -135,11 +133,11 @@
                 <label class="checkbox consent">
                     <input type="checkbox" name="Consent" value="true" required>
                     <input type="hidden" name="Consent" value="false">
-                    I agree to HAENG SUNG's internal system usage policy.
+                    <span>I agree to HAENG SUNG's internal system usage policy.</span>
                 </label>
 
                 <button class="submit" type="submit">Create Account</button>
-                <p class="form-note @(!ViewContext.ViewData.ModelState.IsValid && activeTab == "register" ? "error" : "")">
+                <p class="form-note @(!ViewContext.ViewData.ModelState.IsValid && activeTab == "register" ? "has-message error" : "")">
                     @if (!ViewContext.ViewData.ModelState.IsValid && activeTab == "register")
                     {
                         @string.Join(" ", ViewContext.ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))
@@ -147,33 +145,28 @@
                 </p>
             </form>
 
-            <div class="panel-footer">
-                <span>&copy; HAENG SUNG</span>
-                <span>MMES BUILD 3.0.0</span>
-            </div>
-        </section>
-
-        <section class="panel-brand">
-            <div class="bars" aria-hidden="true">
-                <div class="bar bar-a"></div>
-                <div class="bar bar-b"></div>
-                <div class="bar bar-c"></div>
-            </div>
-            <div class="ghost-mark" aria-hidden="true"></div>
-
-            <div class="brand-hero">
-                <p class="eyebrow">Manufacturing Execution System</p>
-                <h2>MMES</h2>
-                <p>Real-time monitoring of SMT, AOI/SPI and production planning for the HAENG SUNG plant.</p>
-            </div>
-
-            <div class="brand-footer">
-                <span class="wordmark">HAENG SUNG</span>
-                <span>10.8.11.184 · mex_mes</span>
+            <div class="auth-footer">
+                <button type="button" class="mode-toggle" id="mode-toggle">
+                    @if (activeTab == "register")
+                    {
+                        <text>Already have an account? <strong>Sign In</strong></text>
+                    }
+                    else
+                    {
+                        <text>Don't have an account? <strong>Register</strong></text>
+                    }
+                </button>
             </div>
         </section>
     </div>
 
     <script src="~/js/account.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
